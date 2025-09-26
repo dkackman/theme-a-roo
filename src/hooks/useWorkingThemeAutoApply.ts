@@ -16,15 +16,13 @@ export const useWorkingThemeAutoApply = () => {
   const hasAppliedWorkingTheme = useRef(false);
   const lastAppliedThemeHash = useRef<string>('');
 
-  // Apply the working theme at startup only if no theme is selected or working theme was already selected
+  // Apply the working theme at startup - always set working theme as the active theme
   useEffect(() => {
     if (!isLoading && WorkingTheme && !hasAppliedWorkingTheme.current) {
-      // Only auto-apply if no current theme exists OR if working theme was previously selected
-      if (!currentTheme || currentTheme.name === DESIGN_THEME_NAME) {
-        const workingThemeJson = JSON.stringify(getInitializedWorkingTheme());
-        setCustomTheme(workingThemeJson);
-        lastAppliedThemeHash.current = workingThemeJson;
-      }
+      // Always auto-apply the working theme on startup to ensure it's the active theme
+      const workingThemeJson = JSON.stringify(getInitializedWorkingTheme());
+      setCustomTheme(workingThemeJson);
+      lastAppliedThemeHash.current = workingThemeJson;
       hasAppliedWorkingTheme.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
