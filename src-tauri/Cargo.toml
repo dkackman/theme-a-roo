@@ -1,0 +1,26 @@
+[package]
+name = "theme-a-roo"
+version = "0.1.0"
+description = "Theme designer for the theme-a-roo."
+authors = ["dkackman <@dkackman>"]
+license = "Apache-2.0"
+repository = "https://github.com/dkackman/theme-a-roo"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[lib]
+name = "sage_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+tauri = { workspace = true, features = [] }
+tauri-plugin-window-state = "2.0"
+tauri-plugin-dialog = "2.0"
+tauri-plugin-fs = "2.0"
+serde_json = "1.0"
+
+[build-dependencies]
+tauri-build = { workspace = true, features = [] }
+glob = { workspace = true }
