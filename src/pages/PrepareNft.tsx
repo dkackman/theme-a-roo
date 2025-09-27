@@ -2,6 +2,7 @@ import Header from '@/components/Header';
 import Layout from '@/components/Layout';
 import CollectionInfoForm from '@/components/nft/CollectionInfoForm';
 import NftImagesForm from '@/components/nft/NftImagesForm';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useCollectionInfo } from '@/hooks/useCollectionInfo';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -30,21 +31,29 @@ export default function PrepareNft() {
   return (
     <Layout>
       <Header title='Theme NFT' back={handleBack} />
-      <div className='flex-1 overflow-auto backdrop-blur-sm bg-background/80'>
+      <div className='flex-1 overflow-auto bg-background/80'>
         <div className='container mx-auto p-6'>
-          {currentStep === 1 ? (
-            <CollectionInfoForm
-              collectionInfo={collectionInfo}
-              onInfoChange={updateCollectionInfo}
-              onNext={handleNextStep}
-            />
-          ) : currentStep === 2 ? (
-            <NftImagesForm onBack={handlePrevStep} onNext={handleNextStep3} />
-          ) : (
-            <div className='flex items-center justify-center p-8'>
-              <span>Step 3 - Coming Soon</span>
-            </div>
-          )}
+          <Card>
+            <CardHeader></CardHeader>
+            <CardContent>
+              {currentStep === 1 ? (
+                <CollectionInfoForm
+                  collectionInfo={collectionInfo}
+                  onInfoChange={updateCollectionInfo}
+                  onNext={handleNextStep}
+                />
+              ) : currentStep === 2 ? (
+                <NftImagesForm
+                  onBack={handlePrevStep}
+                  onNext={handleNextStep3}
+                />
+              ) : (
+                <div className='flex items-center justify-center p-8'>
+                  <span>Step 3 - Coming Soon</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>
