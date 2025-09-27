@@ -9,6 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useErrors } from '@/hooks/useErrors';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
@@ -17,6 +25,7 @@ import { validateThemeJson } from '@/lib/themes';
 import Editor from '@monaco-editor/react';
 import { Check, Info, Loader2, Upload } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { useTheme } from 'theme-o-rama';
 
 export default function JsonEditor() {
@@ -32,6 +41,43 @@ export default function JsonEditor() {
   const [validationState, setValidationState] = useState<
     'none' | 'valid' | 'invalid'
   >('none');
+
+  // Unsaved changes tracking
+  const [originalJsonValue, setOriginalJsonValue] = useState('');
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = useCallback(() => {
+    return jsonEditorValue !== originalJsonValue;
+  }, [jsonEditorValue, originalJsonValue]);
+
+  // Navigation blocking
+  const [showNavigationWarning, setShowNavigationWarning] = useState(false);
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasUnsavedChanges() && currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  // Handle navigation blocking
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      setShowNavigationWarning(true);
+    }
+  }, [blocker.state]);
+
+  const handleConfirmNavigation = useCallback(() => {
+    if (blocker.state === 'blocked') {
+      blocker.proceed();
+    }
+    setShowNavigationWarning(false);
+  }, [blocker]);
+
+  const handleCancelNavigation = useCallback(() => {
+    if (blocker.state === 'blocked') {
+      blocker.reset();
+    }
+    setShowNavigationWarning(false);
+  }, [blocker]);
 
   // Handler for applying JSON editor changes - completely replaces working theme
   const handleApplyJsonTheme = useCallback(() => {
@@ -52,6 +98,9 @@ export default function JsonEditor() {
       // Replace the working theme completely with the JSON content
       // The useWorkingThemeAutoApply hook will automatically apply the changes
       setWorkingThemeFromJson(jsonEditorValue);
+
+      // Update the original value to mark changes as saved
+      setOriginalJsonValue(jsonEditorValue);
 
       // Reset validation state after successful apply
       setValidationState('none');
@@ -103,8 +152,11 @@ export default function JsonEditor() {
       const workingThemeJson = JSON.stringify(WorkingTheme, null, 2);
       if (isWorkingThemeSelected && workingThemeJson) {
         setJsonEditorValue(workingThemeJson);
+        setOriginalJsonValue(workingThemeJson);
       } else if (currentTheme) {
-        setJsonEditorValue(JSON.stringify(currentTheme, null, 2));
+        const currentThemeJson = JSON.stringify(currentTheme, null, 2);
+        setJsonEditorValue(currentThemeJson);
+        setOriginalJsonValue(currentThemeJson);
       }
       setHasLoadedInitialTheme(true);
     }
@@ -236,6 +288,31 @@ export default function JsonEditor() {
             </Card>
           </div>
         </div>
+
+        {/* Navigation Warning Dialog */}
+        <Dialog
+          open={showNavigationWarning}
+          onOpenChange={setShowNavigationWarning}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Unsaved Changes</DialogTitle>
+              <DialogDescription>
+                You have unsaved changes in the JSON editor. If you navigate
+                away now, your changes will be lost. Are you sure you want to
+                continue?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant='outline' onClick={handleCancelNavigation}>
+                Cancel
+              </Button>
+              <Button variant='destructive' onClick={handleConfirmNavigation}>
+                Discard Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Layout>
     );
   } catch (error) {
