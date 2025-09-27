@@ -1,4 +1,12 @@
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -37,6 +45,9 @@ export function ThemeActions() {
   } = useWorkingThemeState();
   const [isTauri, setIsTauri] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showStartWithConfirm, setShowStartWithConfirm] = useState(false);
+  const [showOpenConfirm, setShowOpenConfirm] = useState(false);
 
   // Check if working theme is currently selected
   const isWorkingThemeSelected = currentTheme?.name === DESIGN_THEME_NAME;
@@ -62,6 +73,7 @@ export function ThemeActions() {
       2,
     );
     setCustomTheme(workingThemeJson);
+    setShowResetConfirm(false);
   }, [clearWorkingTheme, getInitializedWorkingTheme, setCustomTheme]);
 
   const handleStartWithThisTheme = useCallback(() => {
@@ -81,6 +93,7 @@ export function ThemeActions() {
       );
       setCustomTheme(workingThemeJson);
     }
+    setShowStartWithConfirm(false);
   }, [
     currentTheme,
     setWorkingThemeFromCurrent,
@@ -197,6 +210,7 @@ export function ThemeActions() {
         fileInput.click();
       }
     }
+    setShowOpenConfirm(false);
   }, [
     isTauri,
     addError,
@@ -209,7 +223,7 @@ export function ThemeActions() {
       {/* Action Buttons */}
       <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
         <Button
-          onClick={handleOpenTheme}
+          onClick={() => setShowOpenConfirm(true)}
           variant='outline'
           className='flex flex-col items-center gap-2 h-auto py-4'
         >
@@ -218,7 +232,9 @@ export function ThemeActions() {
         </Button>
         <Button
           onClick={
-            isWorkingThemeSelected ? handleClearTheme : handleStartWithThisTheme
+            isWorkingThemeSelected
+              ? () => setShowResetConfirm(true)
+              : () => setShowStartWithConfirm(true)
           }
           variant='outline'
           className={`flex flex-col items-center gap-2 h-auto py-4 ${
@@ -366,6 +382,77 @@ export function ThemeActions() {
           }}
         />
       )}
+
+      {/* Confirmation Dialogs */}
+      <Dialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Working Theme</DialogTitle>
+            <DialogDescription>
+              This will replace your current working theme with the default
+              theme. All your current theme customizations will be lost. Are you
+              sure you want to continue?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setShowResetConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant='destructive' onClick={handleClearTheme}>
+              Reset Theme
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showStartWithConfirm}
+        onOpenChange={setShowStartWithConfirm}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start with This Theme</DialogTitle>
+            <DialogDescription>
+              This will replace your current working theme with [
+              {currentTheme?.displayName}]. All your current theme
+              customizations will be lost. Are you sure you want to continue?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setShowStartWithConfirm(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleStartWithThisTheme}>
+              Start with This Theme
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showOpenConfirm} onOpenChange={setShowOpenConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Open Theme File</DialogTitle>
+            <DialogDescription>
+              This will replace your current working theme with the theme from
+              the selected file. All your current theme customizations will be
+              lost. Are you sure you want to continue?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setShowOpenConfirm(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleOpenTheme}>Open Theme</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

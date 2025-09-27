@@ -15,7 +15,12 @@ if (import.meta.env.MODE === 'development') {
     openai = null;
   }
 } else {
-  openai = null;
+  try {
+    openai = new OpenAI();
+  } catch (error) {
+    console.error('Error initializing OpenAI', error);
+    openai = null;
+  }
 }
 
 export function isOpenAIInitialized() {
