@@ -1,3 +1,4 @@
+import { ReplaceWorkingThemeWarning } from '@/components/dialogs/ReplaceWorkingThemeWarning';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -413,76 +414,33 @@ export function ThemeActions() {
         />
       )}
 
-      {/* Confirmation Dialogs */}
-      <Dialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reset Working Theme</DialogTitle>
-            <DialogDescription>
-              This will replace your current working theme with the default
-              theme. All your current theme customizations will be lost. Are you
-              sure you want to continue?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setShowResetConfirm(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant='destructive' onClick={handleClearTheme}>
-              Reset Theme
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
+      <ReplaceWorkingThemeWarning
+        open={showResetConfirm}
+        onOpenChange={setShowResetConfirm}
+        title='Reset Working Theme'
+        description='This will replace your current working theme with the default theme. All your current theme customizations will be lost. Are you sure you want to continue?'
+        confirmText='Reset Theme'
+        onConfirm={handleClearTheme}
+        onCancel={() => setShowResetConfirm(false)}
+      />
+      <ReplaceWorkingThemeWarning
         open={showStartWithConfirm}
         onOpenChange={setShowStartWithConfirm}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Start with This Theme</DialogTitle>
-            <DialogDescription>
-              This will replace your current working theme with [
-              {currentTheme?.displayName}]. All your current theme
-              customizations will be lost. Are you sure you want to continue?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setShowStartWithConfirm(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleStartWithThisTheme}>
-              Start with This Theme
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showOpenConfirm} onOpenChange={setShowOpenConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Open Theme File</DialogTitle>
-            <DialogDescription>
-              This will replace your current working theme with the theme from
-              the selected file. All your current theme customizations will be
-              lost. Are you sure you want to continue?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setShowOpenConfirm(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleOpenTheme}>Open Theme</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        title='Start with This Theme'
+        description={`This will replace your current working theme with [${currentTheme?.displayName}]. All your current theme customizations will be lost. Are you sure you want to continue?`}
+        confirmText='Start with This Theme'
+        onConfirm={handleStartWithThisTheme}
+        onCancel={() => setShowStartWithConfirm(false)}
+      />
+      <ReplaceWorkingThemeWarning
+        open={showOpenConfirm}
+        onOpenChange={setShowOpenConfirm}
+        title='Open Theme File'
+        description='This will replace your current working theme with the theme from the selected file. All your current theme customizations will be lost. Are you sure you want to continue?'
+        confirmText='Open Theme'
+        onConfirm={handleOpenTheme}
+        onCancel={() => setShowOpenConfirm(false)}
+      />
 
       <Dialog
         open={showBackgroundImageWarning}

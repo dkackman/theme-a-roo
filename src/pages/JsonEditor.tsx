@@ -1,3 +1,4 @@
+import { ReplaceWorkingThemeWarning } from '@/components/dialogs/ReplaceWorkingThemeWarning';
 import Header from '@/components/Header';
 import Layout from '@/components/Layout';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -9,14 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useErrors } from '@/hooks/useErrors';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
@@ -290,29 +283,15 @@ export default function JsonEditor() {
         </div>
 
         {/* Navigation Warning Dialog */}
-        <Dialog
+        <ReplaceWorkingThemeWarning
           open={showNavigationWarning}
           onOpenChange={setShowNavigationWarning}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Unsaved Changes</DialogTitle>
-              <DialogDescription>
-                You have unsaved changes in the JSON editor. If you navigate
-                away now, your changes will be lost. Are you sure you want to
-                continue?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant='outline' onClick={handleCancelNavigation}>
-                Cancel
-              </Button>
-              <Button variant='destructive' onClick={handleConfirmNavigation}>
-                Discard Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          title='Unsaved Changes'
+          description='You have unsaved changes in the JSON editor. If you navigate away now, your changes will be lost. Are you sure you want to continue?'
+          confirmText='Discard Changes'
+          onConfirm={handleConfirmNavigation}
+          onCancel={handleCancelNavigation}
+        />
       </Layout>
     );
   } catch (error) {
