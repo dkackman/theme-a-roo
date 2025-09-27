@@ -28,6 +28,7 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { FileInput, FolderOpen, Loader2, RotateCcw, Save } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Theme, useTheme } from 'theme-o-rama';
 
@@ -44,6 +45,7 @@ const needsBackgroundImageUpload = (backgroundImage: string): boolean => {
 export function ThemeActions() {
   const { addError } = useErrors();
   const { currentTheme, setCustomTheme } = useTheme();
+  const navigate = useNavigate();
   const {
     WorkingTheme,
     setThemeDisplayName,
@@ -88,6 +90,10 @@ export function ThemeActions() {
       );
     }
   }, []);
+
+  const handlePrepareNft = useCallback(() => {
+    navigate('/prepare-nft');
+  }, [navigate]);
 
   const handleClearTheme = useCallback(() => {
     clearWorkingTheme();
@@ -299,7 +305,10 @@ export function ThemeActions() {
             </>
           )}
         </Button>{' '}
-        <Button className='flex flex-col items-center gap-2 h-auto py-4'>
+        <Button
+          onClick={handlePrepareNft}
+          className='flex flex-col items-center gap-2 h-auto py-4'
+        >
           <>
             <FileInput className='h-5 w-5' />
             <span className='text-sm'>Prepare NFT</span>
