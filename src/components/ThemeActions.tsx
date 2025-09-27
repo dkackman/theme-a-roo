@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useErrors } from '@/hooks/useErrors';
+import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
 import {
   DESIGN_THEME_NAME,
   useWorkingThemeState,
@@ -27,7 +28,17 @@ import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { FileInput, FolderOpen, Loader2, RotateCcw, Save } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useTheme } from 'theme-o-rama';
+import { Theme, useTheme } from 'theme-o-rama';
+
+const needsBackgroundImageUpload = (backgroundImage: string): boolean => {
+  if (!backgroundImage.trim()) return false;
+
+  return !(
+    backgroundImage.startsWith('data:') ||
+    backgroundImage.startsWith('http://') ||
+    backgroundImage.startsWith('https://')
+  );
+};
 
 export function ThemeActions() {
   const { addError } = useErrors();
@@ -48,15 +59,34 @@ export function ThemeActions() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showStartWithConfirm, setShowStartWithConfirm] = useState(false);
   const [showOpenConfirm, setShowOpenConfirm] = useState(false);
+  const [showBackgroundImageWarning, setShowBackgroundImageWarning] =
+    useState(false);
+  const [backgroundImagePath, setBackgroundImagePath] = useState<string>('');
 
   // Check if working theme is currently selected
-  const isWorkingThemeSelected = currentTheme?.name === DESIGN_THEME_NAME;
+  const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
 
   useEffect(() => {
     setIsTauri(isTauriEnvironment());
   }, []);
 
-  // Handlers
+  const checkBackgroundImageAndWarn = useCallback((theme: Theme) => {
+    try {
+      if (
+        theme?.backgroundImage &&
+        needsBackgroundImageUpload(theme.backgroundImage)
+      ) {
+        setBackgroundImagePath(theme.backgroundImage);
+        setShowBackgroundImageWarning(true);
+      }
+    } catch (error) {
+      // If JSON parsing fails, we don't need to warn about background image
+      console.warn(
+        'Failed to parse theme JSON for background image check:',
+        error,
+      );
+    }
+  }, []);
 
   const handleClearTheme = useCallback(() => {
     clearWorkingTheme();
@@ -180,6 +210,7 @@ export function ThemeActions() {
         if (filePath) {
           const fileContent = await readTextFile(filePath as string);
           setWorkingThemeFromJson(fileContent);
+          checkBackgroundImageAndWarn(WorkingTheme);
 
           // Apply the imported theme immediately
           const initializedTheme = getInitializedWorkingTheme();
@@ -217,6 +248,7 @@ export function ThemeActions() {
     setWorkingThemeFromJson,
     getInitializedWorkingTheme,
     setCustomTheme,
+    checkBackgroundImageAndWarn,
   ]);
   return (
     <div className='space-y-4'>
@@ -265,10 +297,7 @@ export function ThemeActions() {
             </>
           )}
         </Button>{' '}
-        <Button
-          disabled={true}
-          className='flex flex-col items-center gap-2 h-auto py-4'
-        >
+        <Button className='flex flex-col items-center gap-2 h-auto py-4'>
           <>
             <FileInput className='h-5 w-5' />
             <span className='text-sm'>Prepare NFT</span>
@@ -355,6 +384,7 @@ export function ThemeActions() {
                 const fileContent = event.target?.result as string;
                 try {
                   setWorkingThemeFromJson(fileContent);
+                  checkBackgroundImageAndWarn(WorkingTheme);
 
                   // Apply the imported theme immediately
                   const initializedTheme = getInitializedWorkingTheme();
@@ -450,6 +480,27 @@ export function ThemeActions() {
               Cancel
             </Button>
             <Button onClick={handleOpenTheme}>Open Theme</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showBackgroundImageWarning}
+        onOpenChange={setShowBackgroundImageWarning}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Background Image Required</DialogTitle>
+            <DialogDescription>
+              This theme includes a background image ({backgroundImagePath})
+              that needs to be uploaded separately. Please go to the Background
+              page to upload the background image file.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowBackgroundImageWarning(false)}>
+              Got it
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

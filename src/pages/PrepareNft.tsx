@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { applyThemeIsolated, useTheme } from 'theme-o-rama';
 
-export default function ThemePreview() {
+export default function PrepareNft() {
   const { currentTheme } = useTheme();
   const navigate = useNavigate();
   const previewRef = useRef<HTMLDivElement>(null);

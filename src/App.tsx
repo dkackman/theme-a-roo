@@ -14,8 +14,8 @@ import BackgroundEditor from './pages/BackgroundEditor';
 import Components from './pages/Components';
 import Dialogs from './pages/Dialogs';
 import JsonEditor from './pages/JsonEditor';
+import PrepareNft from './pages/PrepareNft';
 import Tables from './pages/Tables';
-import ThemePreview from './pages/ThemePreview';
 import Themes from './pages/Themes';
 
 // Initialize default theme in localStorage if not present
@@ -63,7 +63,7 @@ const router = createHashRouter(
       <Route path='/components' element={<Components />} />
       <Route path='/dialogs' element={<Dialogs />} />
       <Route path='/about' element={<About />} />
-      <Route path='/theme-preview' element={<ThemePreview />} />
+      <Route path='/prepare-nft' element={<PrepareNft />} />
       <Route path='/background-editor' element={<BackgroundEditor />} />
       <Route path='/json-editor' element={<JsonEditor />} />
     </>,
