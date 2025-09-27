@@ -330,8 +330,8 @@ export default function NftImagesForm({ onBack, onNext }: NftImagesFormProps) {
             </CardHeader>
             <CardContent>
               {nftIcon ? (
-                <div className='space-y-3'>
-                  <div className='w-32 h-32 mx-auto border border-border rounded-lg overflow-hidden'>
+                <div className='w-32 h-32 mx-auto relative'>
+                  <div className='w-full h-full border border-border rounded-lg overflow-hidden'>
                     <img
                       src={nftIcon}
                       alt='NFT Icon'
@@ -339,13 +339,12 @@ export default function NftImagesForm({ onBack, onNext }: NftImagesFormProps) {
                     />
                   </div>
                   <Button
-                    variant='outline'
+                    variant='destructive'
                     size='sm'
                     onClick={() => setNftIcon(null)}
-                    className='w-full'
+                    className='absolute -top-2 -right-2 h-6 w-6 rounded-full p-0'
                   >
-                    <X className='w-3 h-3 mr-2' />
-                    Remove
+                    <X className='h-3 w-3' />
                   </Button>
                 </div>
               ) : (
@@ -384,7 +383,7 @@ export default function NftImagesForm({ onBack, onNext }: NftImagesFormProps) {
             </CardHeader>
             <CardContent>
               {collectionBanner ? (
-                <div className='space-y-3'>
+                <div className='relative'>
                   <div className='w-full h-24 border border-border rounded-lg overflow-hidden'>
                     <img
                       src={collectionBanner}
@@ -393,13 +392,12 @@ export default function NftImagesForm({ onBack, onNext }: NftImagesFormProps) {
                     />
                   </div>
                   <Button
-                    variant='outline'
+                    variant='destructive'
                     size='sm'
                     onClick={() => setCollectionBanner(null)}
-                    className='w-full'
+                    className='absolute -top-2 -right-2 h-6 w-6 rounded-full p-0'
                   >
-                    <X className='w-3 h-3 mr-2' />
-                    Remove
+                    <X className='h-3 w-3' />
                   </Button>
                 </div>
               ) : (

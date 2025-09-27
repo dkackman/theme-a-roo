@@ -2,6 +2,7 @@ import Header from '@/components/Header';
 import Layout from '@/components/Layout';
 import CollectionInfoForm from '@/components/nft/CollectionInfoForm';
 import NftImagesForm from '@/components/nft/NftImagesForm';
+import UploadToIPFS from '@/components/nft/UploadToIPFS';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useCollectionInfo } from '@/hooks/useCollectionInfo';
 import { useState } from 'react';
@@ -28,6 +29,10 @@ export default function PrepareNft() {
     setCurrentStep(1);
   };
 
+  const handlePrevStep2 = () => {
+    setCurrentStep(2);
+  };
+
   return (
     <Layout>
       <Header title='Theme NFT' back={handleBack} />
@@ -48,9 +53,7 @@ export default function PrepareNft() {
                   onNext={handleNextStep3}
                 />
               ) : (
-                <div className='flex items-center justify-center p-8'>
-                  <span>Step 3 - Coming Soon</span>
-                </div>
+                <UploadToIPFS onBack={handlePrevStep2} />
               )}
             </CardContent>
           </Card>
