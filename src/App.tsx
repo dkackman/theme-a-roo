@@ -18,6 +18,14 @@ import Tables from './pages/Tables';
 import ThemePreview from './pages/ThemePreview';
 import Themes from './pages/Themes';
 
+// Initialize default theme in localStorage if not present
+function initializeDefaultTheme() {
+  const existingTheme = localStorage.getItem('theme');
+  if (!existingTheme) {
+    localStorage.setItem('theme', 'theme-a-roo-custom-theme');
+  }
+}
+
 // Theme-aware toast container component
 function ThemeAwareToastContainer() {
   const { currentTheme } = useTheme();
@@ -63,6 +71,9 @@ const router = createHashRouter(
 );
 
 export default function App() {
+  // Initialize default theme in localStorage early in app startup
+  initializeDefaultTheme();
+
   return (
     <ThemeProvider
       discoverThemes={discoverThemes}

@@ -16,35 +16,35 @@ export const useWorkingThemeAutoApply = () => {
   const hasAppliedWorkingTheme = useRef(false);
   const lastAppliedThemeHash = useRef<string>('');
 
-  // Apply the working theme at startup - always set working theme as the active theme
+  // Apply the working theme at startup - only on first app load when no theme is selected
   useEffect(() => {
     if (!isLoading && WorkingTheme && !hasAppliedWorkingTheme.current) {
-      // Always auto-apply the working theme on startup to ensure it's the active theme
-      const workingThemeJson = JSON.stringify(getInitializedWorkingTheme());
-      setCustomTheme(workingThemeJson);
-      lastAppliedThemeHash.current = workingThemeJson;
-      hasAppliedWorkingTheme.current = true;
+      // Auto-apply the working theme on first app load when no theme is selected
+      // This ensures the app always has a theme at startup
+      if (!currentTheme) {
+        const workingThemeJson = JSON.stringify(getInitializedWorkingTheme());
+        setCustomTheme(workingThemeJson);
+        lastAppliedThemeHash.current = workingThemeJson;
+        hasAppliedWorkingTheme.current = true;
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]); // Only depend on isLoading to run once at startup
 
   // Auto-apply working theme changes when working theme is currently selected
   useEffect(() => {
-    if (
-      !isLoading &&
-      currentTheme?.name === DESIGN_THEME_NAME &&
-      hasAppliedWorkingTheme.current
-    ) {
+    if (!isLoading && currentTheme?.name === DESIGN_THEME_NAME) {
       const workingThemeJson = JSON.stringify(getInitializedWorkingTheme());
 
       // Only apply if the theme has actually changed to prevent recursion
       if (workingThemeJson !== lastAppliedThemeHash.current) {
         setCustomTheme(workingThemeJson);
         lastAppliedThemeHash.current = workingThemeJson;
+        hasAppliedWorkingTheme.current = true;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [WorkingTheme]); // Only depend on WorkingTheme changes
+  }, [WorkingTheme, currentTheme?.name]); // Depend on WorkingTheme changes and current theme name
 
   return {
     isWorkingThemeSelected: currentTheme?.name === DESIGN_THEME_NAME,

@@ -28,8 +28,8 @@ export function NavLink({
     (location.pathname === url ||
       (url !== '/' && location.pathname.startsWith(url)));
 
-  const baseClassName = `flex items-center gap-3 rounded-lg py-1.5 transition-all ${
-    isCollapsed ? 'justify-center' : 'px-2'
+  const baseClassName = `flex items-center gap-3 transition-all ${
+    isCollapsed ? 'justify-center p-2 rounded-full' : 'px-2 rounded-lg py-1.5'
   } text-lg md:text-base`;
 
   const className = isActive

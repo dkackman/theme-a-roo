@@ -30,10 +30,20 @@ const DEFAULT_THEME = {
   name: DESIGN_THEME_NAME,
   displayName: 'Design',
   schemaVersion: 1,
-  inherits: 'color' as const,
+  inherits: 'light' as const,
   mostLike: 'light' as const,
   colors: {
     themeColor: 'hsl(92, 20%, 42%)',
+    primary: '#324053',
+    primaryForeground: '#dfff75',
+    secondary: '#b4bfdf',
+    secondaryForeground: '#2C323C',
+    muted: '#dbecfb',
+    mutedForeground: '#2C323C',
+    accent: '#dfff75',
+    accentForeground: '#2C323C',
+    destructive: '#ef4343',
+    destructiveForeground: '#fafafa',
   },
 };
 

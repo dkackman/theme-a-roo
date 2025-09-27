@@ -19,7 +19,7 @@ export function TopNav({ isCollapsed }: NavProps) {
 
   return (
     <nav
-      className={`grid font-medium font-body ${isCollapsed ? 'gap-2' : ''}`}
+      className={`grid font-medium font-body ${isCollapsed ? 'gap-1' : ''}`}
       role='navigation'
       aria-label='Main navigation'
     >
