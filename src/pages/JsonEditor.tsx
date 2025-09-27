@@ -10,11 +10,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useErrors } from '@/hooks/useErrors';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { validateThemeJson } from '@/lib/themes';
+import Editor from '@monaco-editor/react';
 import { Check, Info, Loader2, Upload } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTheme } from 'theme-o-rama';
@@ -187,33 +187,51 @@ export default function JsonEditor() {
                     </Button>
                   </div>
                 </div>
-                <Textarea
-                  id='theme-json'
-                  value={jsonEditorValue}
-                  onChange={
-                    isWorkingThemeSelected
-                      ? (e) => handleJsonEditorChange(e.target.value)
-                      : () => undefined
-                  }
-                  className={`w-full min-h-[calc(100vh-300px)] p-3 border border-gray-300 rounded font-mono text-sm bg-gray-50 resize-none ${!isWorkingThemeSelected ? 'opacity-75' : ''}`}
-                  style={{
-                    fontFamily:
-                      'Monaco, Menlo, Ubuntu Mono, Consolas, source-code-pro, monospace',
-                    tabSize: 4,
-                    MozTabSize: 4,
-                    fontSize: 14,
-                    backgroundColor: '#ffffff',
-                    color: '#000000',
-                    whiteSpace: 'pre',
-                    height: 'calc(100vh - 300px)',
-                  }}
-                  spellCheck={false}
-                  autoComplete='off'
-                  autoCorrect='off'
-                  autoCapitalize='off'
-                  placeholder={!currentTheme ? 'No theme available.' : ''}
-                  readOnly={!isWorkingThemeSelected}
-                />
+                <div
+                  className={`w-full border border-gray-300 rounded ${!isWorkingThemeSelected ? 'opacity-75' : ''}`}
+                >
+                  <Editor
+                    height='calc(100vh - 300px)'
+                    defaultLanguage='json'
+                    value={jsonEditorValue}
+                    onChange={
+                      isWorkingThemeSelected
+                        ? (value) => handleJsonEditorChange(value || '')
+                        : undefined
+                    }
+                    options={{
+                      readOnly: !isWorkingThemeSelected,
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      fontSize: 12,
+                      fontFamily:
+                        'Monaco, Menlo, Ubuntu Mono, Consolas, source-code-pro, monospace',
+                      tabSize: 2,
+                      insertSpaces: true,
+                      wordWrap: 'on',
+                      automaticLayout: true,
+                      formatOnPaste: true,
+                      formatOnType: true,
+                      bracketPairColorization: { enabled: true },
+                      folding: true,
+                      lineNumbers: 'on',
+                      renderWhitespace: 'selection',
+                      selectOnLineNumbers: true,
+                      roundedSelection: false,
+                      cursorStyle: 'line',
+                      contextmenu: true,
+                      mouseWheelZoom: true,
+                      smoothScrolling: true,
+                      theme: 'vs',
+                    }}
+                    theme='vs'
+                    loading={
+                      <div className='flex items-center justify-center h-32'>
+                        Loading editor...
+                      </div>
+                    }
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
