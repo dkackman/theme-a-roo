@@ -250,6 +250,7 @@ export function ThemeActions() {
     getInitializedWorkingTheme,
     setCustomTheme,
     checkBackgroundImageAndWarn,
+    WorkingTheme,
   ]);
   return (
     <div className='space-y-4'>
