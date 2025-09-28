@@ -305,15 +305,17 @@ export function ThemeActions() {
             </>
           )}
         </Button>{' '}
-        <Button
-          onClick={handlePrepareNft}
-          className='flex flex-col items-center gap-2 h-auto py-4'
-        >
-          <>
-            <FileInput className='h-5 w-5' />
-            <span className='text-sm'>Prepare NFT</span>
-          </>
-        </Button>
+        {isTauri && (
+          <Button
+            onClick={handlePrepareNft}
+            className='flex flex-col items-center gap-2 h-auto py-4'
+          >
+            <>
+              <FileInput className='h-5 w-5' />
+              <span className='text-sm'>Prepare NFT</span>
+            </>
+          </Button>
+        )}
       </div>
 
       {/* Theme Name and Selectors */}

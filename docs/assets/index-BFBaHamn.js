@@ -1,1 +1,0 @@
-import{i as p}from"./index-BSnUzQwA.js";import"./ui-B1xPTTxj.js";import"./vendor-C6wbTYyd.js";import"./router-DEhG61eA.js";async function m(o,i){await p("plugin:opener|open_url",{url:o,with:i})}export{m as openUrl};
