@@ -1,6 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { isTauriEnvironment, makeValidFileName } from '@/lib/utils';
 import html2canvas from 'html2canvas-pro';
@@ -15,13 +20,7 @@ export default function NftImagesForm() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [nftIcon, setNftIcon] = useState<string | null>(null);
   const [collectionBanner, setCollectionBanner] = useState<string | null>(null);
-  const backgroundImage = (() => {
-    const bgImg = getBackgroundImage();
-    // Only show if it's a data URL (not a regular URL)
-    return bgImg && (bgImg.startsWith('data:') || bgImg.startsWith('blob:'))
-      ? bgImg
-      : null;
-  })();
+  const backgroundImage = getBackgroundImage();
 
   // Load saved images from localStorage
   useEffect(() => {
@@ -180,19 +179,15 @@ export default function NftImagesForm() {
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
         {/* Left Column - NFT Icon */}
         <div className='space-y-4'>
-          <div>
-            <Label className='text-base font-medium'>NFT Icon *</Label>
-            <p className='text-sm text-muted-foreground mb-4'>
-              This is what will be shown as your theme preview. You can download
-              the generated preview or upload your own. The icon file should be
-              320x320px.
-            </p>
-          </div>
-
           {/* Theme Preview */}
           <Card>
             <CardHeader>
-              <CardTitle className='text-base'>Current Theme Preview</CardTitle>
+              <CardTitle className='text-base'>NFT Icon *</CardTitle>
+              <CardDescription className='text-sm text-muted-foreground mb-4'>
+                This is what will be shown as your NFT preview. You can download
+                this generated preview or upload your own. The icon file should
+                be 320x320px.
+              </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div

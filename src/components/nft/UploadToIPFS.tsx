@@ -14,6 +14,7 @@ import {
 import { Upload } from 'lucide-react';
 import { PinataSDK, type GroupResponseItem } from 'pinata';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Input } from '../ui/input';
 
@@ -21,6 +22,7 @@ export default function UploadToIPFS() {
   const { collectionInfo } = useCollectionInfo();
   const { getBackgroundImage } = useWorkingThemeState();
   const { uploadedUrls, setUploadedUrls } = useUploadedUrls();
+  const navigate = useNavigate();
   const [apiKey, setApiKey] = useState<string>('');
   const [gatewayUrl, setGatewayUrl] = useState<string>('');
   const [groupName, setGroupName] = useState<string>('');
@@ -90,6 +92,7 @@ export default function UploadToIPFS() {
     setUploadedUrls([]); // Clear previous uploads
     const nftBaseName = collectionInfo.baseName;
     try {
+      toast.info('Starting upload process...');
       const filesToUpload: {
         file: File;
         fileType: 'icon' | 'banner' | 'background';
@@ -121,7 +124,7 @@ export default function UploadToIPFS() {
         });
       }
 
-      if (backgroundImage && backgroundImage.startsWith('data:')) {
+      if (backgroundImage) {
         const response = await fetch(backgroundImage);
         const blob = await response.blob();
         const mimeType = detectMimeTypeFromBlob(blob);
@@ -174,9 +177,18 @@ export default function UploadToIPFS() {
       toast.success('Files uploaded successfully');
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error(
-        `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+
+      // Check if it's a CORS-related error
+      if (error instanceof Error && error.message.includes('CORS')) {
+        toast.error(
+          'Failed to fetch external images due to CORS restrictions. Please try using images from CORS-enabled domains or upload local images instead.',
+          { autoClose: 10000 },
+        );
+      } else {
+        toast.error(
+          `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
     } finally {
       setIsUploading(false);
     }
@@ -286,6 +298,43 @@ export default function UploadToIPFS() {
             <p className='text-muted-foreground'>
               No images to upload. Please go back to step 2 to add images.
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* CORS Information Card */}
+      {(backgroundImage?.startsWith('https://') ||
+        backgroundImage?.startsWith('http://')) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-base'>💡 External Image Tips</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-2'>
+            <p className='text-sm text-muted-foreground'>
+              If you&apos;re using external image URLs and encounter CORS
+              errors, here are some solutions:
+            </p>
+            <ul className='text-sm text-muted-foreground space-y-1 ml-4'>
+              <li>
+                • <strong>Best:</strong> Download the image and upload it as a
+                local file using the{' '}
+                <button
+                  type='button'
+                  onClick={() => navigate('/background-editor')}
+                  className='text-primary hover:text-primary/80 underline'
+                >
+                  Background Editor
+                </button>
+              </li>
+              <li>
+                • <strong>Alternative:</strong> Use images from CORS-enabled
+                domains (like imgur.com, github.com)
+              </li>
+              <li>
+                • <strong>Note:</strong> External URLs may cause CORS errors
+                during upload
+              </li>
+            </ul>
           </CardContent>
         </Card>
       )}
