@@ -281,8 +281,8 @@ export default function UploadMetadata() {
                 <Label htmlFor='metadata'>Generated Metadata</Label>
                 <Textarea
                   id='metadata'
+                  readOnly={true}
                   value={metadata}
-                  onChange={(e) => setMetadata(e.target.value)}
                   className='font-mono text-sm resize-none'
                   rows={20}
                   placeholder='Metadata will appear here...'

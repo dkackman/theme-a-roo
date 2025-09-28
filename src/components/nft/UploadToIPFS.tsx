@@ -6,7 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCollectionInfo } from '@/hooks/useCollectionInfo';
 import { useUploadedUrls } from '@/hooks/useUploadedUrls';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
-import { isTauriEnvironment } from '@/lib/utils';
+import {
+  detectMimeTypeFromBlob,
+  getFileExtensionFromMimeType,
+  isTauriEnvironment,
+} from '@/lib/utils';
 import { Upload } from 'lucide-react';
 import { PinataSDK, type GroupResponseItem } from 'pinata';
 import { useEffect, useState } from 'react';
@@ -94,9 +98,11 @@ export default function UploadToIPFS() {
       if (nftIcon) {
         const response = await fetch(nftIcon);
         const blob = await response.blob();
+        const mimeType = detectMimeTypeFromBlob(blob);
+        const extension = getFileExtensionFromMimeType(mimeType);
         filesToUpload.push({
-          file: new File([blob], `${nftBaseName}.png`, {
-            type: 'image/png',
+          file: new File([blob], `${nftBaseName}.${extension}`, {
+            type: mimeType,
           }),
           fileType: 'icon',
         });
@@ -105,9 +111,11 @@ export default function UploadToIPFS() {
       if (collectionBanner) {
         const response = await fetch(collectionBanner);
         const blob = await response.blob();
+        const mimeType = detectMimeTypeFromBlob(blob);
+        const extension = getFileExtensionFromMimeType(mimeType);
         filesToUpload.push({
-          file: new File([blob], `${nftBaseName}-banner.png`, {
-            type: 'image/png',
+          file: new File([blob], `${nftBaseName}-banner.${extension}`, {
+            type: mimeType,
           }),
           fileType: 'banner',
         });
@@ -116,9 +124,11 @@ export default function UploadToIPFS() {
       if (backgroundImage && backgroundImage.startsWith('data:')) {
         const response = await fetch(backgroundImage);
         const blob = await response.blob();
+        const mimeType = detectMimeTypeFromBlob(blob);
+        const extension = getFileExtensionFromMimeType(mimeType);
         filesToUpload.push({
-          file: new File([blob], `${nftBaseName}-background.png`, {
-            type: 'image/png',
+          file: new File([blob], `${nftBaseName}-background.${extension}`, {
+            type: mimeType,
           }),
           fileType: 'background',
         });

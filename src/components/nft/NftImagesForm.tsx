@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
-import { isTauriEnvironment } from '@/lib/utils';
+import { isTauriEnvironment, makeValidFileName } from '@/lib/utils';
 import html2canvas from 'html2canvas-pro';
 import { Download, Upload, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -154,7 +154,7 @@ export default function NftImagesForm() {
         logging: false,
       });
 
-      const filename = `${currentTheme.displayName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_theme_preview.png`;
+      const filename = `${makeValidFileName(currentTheme.displayName)}_theme_preview.png`;
 
       if (isTauriEnvironment()) {
         await downloadForTauri(canvas, filename);
