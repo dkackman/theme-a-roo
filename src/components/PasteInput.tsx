@@ -40,6 +40,10 @@ export const PasteInput = forwardRef<HTMLInputElement, PasteInputProps>(
           )}
           onChange={onChange}
           value={value}
+          autoComplete='off'
+          autoCorrect='off'
+          autoCapitalize='off'
+          spellCheck='false'
           {...props}
         />
         <div

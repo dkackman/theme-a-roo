@@ -1,4 +1,6 @@
+import { makeValidFileName } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import { useTheme } from 'theme-o-rama';
 
 export interface CollectionInfo {
   description: string;
@@ -7,6 +9,7 @@ export interface CollectionInfo {
   twitterHandle: string;
   website: string;
   licenseUrl: string;
+  baseName: string;
 }
 
 const defaultCollectionInfo: CollectionInfo = {
@@ -16,9 +19,11 @@ const defaultCollectionInfo: CollectionInfo = {
   twitterHandle: '',
   website: '',
   licenseUrl: '',
+  baseName: '',
 };
 
 export function useCollectionInfo() {
+  const { currentTheme } = useTheme();
   const [collectionInfo, setCollectionInfo] = useState<CollectionInfo>(
     defaultCollectionInfo,
   );
@@ -35,6 +40,16 @@ export function useCollectionInfo() {
       }
     }
   }, []);
+
+  // Update baseName when theme changes
+  useEffect(() => {
+    if (currentTheme) {
+      setCollectionInfo((prev) => ({
+        ...prev,
+        baseName: makeValidFileName(currentTheme.displayName),
+      }));
+    }
+  }, [currentTheme]);
 
   // Save collection info to localStorage whenever it changes
   useEffect(() => {

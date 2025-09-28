@@ -2,71 +2,126 @@ import { PasteInput } from '@/components/PasteInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useCollectionInfo } from '@/hooks/useCollectionInfo';
+import { useUploadedUrls } from '@/hooks/useUploadedUrls';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
+import { isTauriEnvironment } from '@/lib/utils';
 import { Upload } from 'lucide-react';
-import { useState } from 'react';
+import { PinataSDK, type GroupResponseItem } from 'pinata';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { Input } from '../ui/input';
 
 export default function UploadToIPFS() {
+  const { collectionInfo } = useCollectionInfo();
   const { getBackgroundImage } = useWorkingThemeState();
+  const { uploadedUrls, setUploadedUrls } = useUploadedUrls();
   const [apiKey, setApiKey] = useState<string>('');
+  const [gatewayUrl, setGatewayUrl] = useState<string>('');
+  const [groupName, setGroupName] = useState<string>('');
   const [isUploading, setIsUploading] = useState<boolean>(false);
+
+  const openLink = async (url: string) => {
+    if (isTauriEnvironment()) {
+      const { openUrl } = await import('@tauri-apps/plugin-opener');
+      await openUrl(url);
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  // Load saved configuration from localStorage and sessionStorage
+  useEffect(() => {
+    const savedGateway = localStorage.getItem('pinata-gateway');
+    const savedGroupName = localStorage.getItem('pinata-group-name');
+    const savedJwt = sessionStorage.getItem('pinata-jwt');
+
+    if (savedGateway) {
+      setGatewayUrl(savedGateway);
+    }
+    if (savedGroupName) {
+      setGroupName(savedGroupName);
+    }
+    if (savedJwt) {
+      setApiKey(savedJwt);
+    }
+  }, []);
+
+  // Save gateway URL to localStorage whenever it changes
+  useEffect(() => {
+    if (gatewayUrl) {
+      localStorage.setItem('pinata-gateway', gatewayUrl);
+    }
+  }, [gatewayUrl]);
+
+  // Save group name to localStorage whenever it changes
+  useEffect(() => {
+    if (groupName) {
+      localStorage.setItem('pinata-group-name', groupName);
+    }
+  }, [groupName]);
+
+  // Save JWT token to sessionStorage whenever it changes
+  useEffect(() => {
+    if (apiKey) {
+      sessionStorage.setItem('pinata-jwt', apiKey);
+    } else {
+      sessionStorage.removeItem('pinata-jwt');
+    }
+  }, [apiKey]);
 
   // Get images from localStorage
   const nftIcon = localStorage.getItem('nft-icon');
   const collectionBanner = localStorage.getItem('nft-banner');
-  const backgroundImage = (() => {
-    const bgImg = getBackgroundImage();
-    // Only show if it's a data URL (not a regular URL)
-    return bgImg && (bgImg.startsWith('data:') || bgImg.startsWith('blob:'))
-      ? bgImg
-      : null;
-  })();
+  const backgroundImage = getBackgroundImage();
 
   const handleUpload = async () => {
-    if (!apiKey.trim()) {
-      toast.error('API key is required');
+    if (!apiKey.trim() || !gatewayUrl.trim()) {
+      toast.error('JWT token and gateway URL are required');
       return;
     }
 
     setIsUploading(true);
+    setUploadedUrls([]); // Clear previous uploads
+    const nftBaseName = collectionInfo.baseName;
     try {
-      // Create IPFS manager
-      const ipfsManager = new IPFSManager(ipfsProvider as IPFSProvider, {
-        apiKey: apiKey.trim(),
-      });
-
-      // Prepare files for upload
-      const filesToUpload: IPFSFile[] = [];
+      const filesToUpload: {
+        file: File;
+        fileType: 'icon' | 'banner' | 'background';
+      }[] = [];
 
       if (nftIcon) {
-        filesToUpload.push(
-          IPFSManager.createFileFromDataUrl(
-            nftIcon,
-            'nft-icon.png',
-            'image/png',
-          ),
-        );
+        const response = await fetch(nftIcon);
+        const blob = await response.blob();
+        filesToUpload.push({
+          file: new File([blob], `${nftBaseName}.png`, {
+            type: 'image/png',
+          }),
+          fileType: 'icon',
+        });
       }
 
       if (collectionBanner) {
-        filesToUpload.push(
-          IPFSManager.createFileFromDataUrl(
-            collectionBanner,
-            'collection-banner.png',
-            'image/png',
-          ),
-        );
+        const response = await fetch(collectionBanner);
+        const blob = await response.blob();
+        filesToUpload.push({
+          file: new File([blob], `${nftBaseName}-banner.png`, {
+            type: 'image/png',
+          }),
+          fileType: 'banner',
+        });
       }
 
-      if (backgroundImage) {
-        filesToUpload.push(
-          IPFSManager.createFileFromDataUrl(
-            backgroundImage,
-            'background-image.png',
-            'image/png',
-          ),
-        );
+      if (backgroundImage && backgroundImage.startsWith('data:')) {
+        const response = await fetch(backgroundImage);
+        const blob = await response.blob();
+        filesToUpload.push({
+          file: new File([blob], `${nftBaseName}-background.png`, {
+            type: 'image/png',
+          }),
+          fileType: 'background',
+        });
       }
 
       if (filesToUpload.length === 0) {
@@ -74,48 +129,39 @@ export default function UploadToIPFS() {
         return;
       }
 
-      toast.info(
-        `Uploading ${filesToUpload.length} files to ${ipfsProvider}...`,
+      toast.info(`Uploading ${filesToUpload.length} files to Pinata...`);
+
+      const pinata = new PinataSDK({
+        pinataJwt: apiKey,
+        pinataGateway: gatewayUrl,
+      });
+      let group: GroupResponseItem | null = null;
+      if (groupName) {
+        const groups = await pinata.groups.public.list();
+        group = groups.groups.find((g) => g.name === groupName) || null;
+      }
+
+      const uploadedFiles = await Promise.all(
+        filesToUpload.map(async (fileObj) => {
+          const uploadResult = await pinata.upload.public.file(
+            fileObj.file,
+            group ? { groupId: group.id } : undefined,
+          );
+          return {
+            ...uploadResult,
+            fileType: fileObj.fileType,
+          };
+        }),
+      );
+      const uploadedUrls = await Promise.all(
+        uploadedFiles.map(async (file) => ({
+          url: await pinata.gateways.public.convert(file.cid),
+          fileType: file.fileType,
+        })),
       );
 
-      // Upload files
-      const results = await ipfsManager.uploadFiles(filesToUpload, {
-        pinToIPFS: true,
-        metadata: {
-          themeName: 'Theme NFT',
-          uploadedAt: new Date().toISOString(),
-        },
-      });
-
-      // Check results
-      const successCount = results.filter((r) => r.success).length;
-      const failedCount = results.length - successCount;
-
-      if (successCount > 0) {
-        toast.success(`Successfully uploaded ${successCount} files to IPFS!`);
-
-        // Log successful uploads
-        results.forEach((result, index) => {
-          if (result.success) {
-            console.log(`File ${filesToUpload[index].name}:`, {
-              hash: result.hash,
-              url: result.url,
-            });
-          }
-        });
-      }
-
-      if (failedCount > 0) {
-        toast.error(`${failedCount} files failed to upload`);
-        results.forEach((result, index) => {
-          if (!result.success) {
-            console.error(
-              `File ${filesToUpload[index].name} failed:`,
-              result.error,
-            );
-          }
-        });
-      }
+      setUploadedUrls(uploadedUrls);
+      toast.success('Files uploaded successfully');
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(
@@ -158,18 +204,39 @@ export default function UploadToIPFS() {
       {/* IPFS Provider Selection */}
       <Card>
         <CardHeader>
-          <CardTitle className='text-base'>IPFS Provider</CardTitle>
+          <CardTitle className='text-base'>Pinata Configuration</CardTitle>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='space-y-2'>
-            <Label htmlFor='api-key'>Pinata API Key</Label>
-            <PasteInput
+            <Label htmlFor='api-key'>JWT Token</Label>
+            <Textarea
               id='api-key'
-              placeholder={`Enter your Pinata API key`}
+              placeholder='Enter your Pinata JWT token'
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              type='password'
+              className='font-mono text-sm resize-none'
+              rows={3}
             />
+          </div>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='gateway-url'>Gateway URL</Label>
+              <PasteInput
+                id='gateway-url'
+                placeholder='some-random-words-887.mypinata.cloud'
+                value={gatewayUrl}
+                onChange={(e) => setGatewayUrl(e.target.value)}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='group-name'>Group Name</Label>
+              <Input
+                id='group-name'
+                placeholder='Enter an optional group name'
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -234,6 +301,76 @@ export default function UploadToIPFS() {
               </>
             )}
           </Button>
+        </div>
+      )}
+
+      {/* Uploaded Images Display */}
+      {uploadedUrls.length > 0 && (
+        <div className='space-y-4'>
+          <div className='text-center'>
+            <h3 className='text-lg font-semibold mb-2'>Uploaded Images</h3>
+            <p className='text-sm text-muted-foreground'>
+              Your images have been successfully uploaded to IPFS
+            </p>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            {uploadedUrls.map((uploadedItem) => {
+              const getItemInfo = (fileType: string) => {
+                switch (fileType) {
+                  case 'icon':
+                    return {
+                      title: 'NFT Icon',
+                    };
+                  case 'banner':
+                    return {
+                      title: 'Collection Banner',
+                    };
+                  case 'background':
+                    return {
+                      title: 'Background Image',
+                    };
+                  default:
+                    return {
+                      title: 'Uploaded Image',
+                    };
+                }
+              };
+
+              const itemInfo = getItemInfo(uploadedItem.fileType);
+
+              return (
+                <Card key={`uploaded-${uploadedItem.fileType}`}>
+                  <CardHeader>
+                    <CardTitle className='text-base flex items-center gap-2'>
+                      {itemInfo.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div className='border border-border rounded-lg overflow-hidden'>
+                      <a
+                        href={uploadedItem.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-xs text-blue-600 hover:text-blue-800 underline break-all cursor-pointer'
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          openLink(uploadedItem.url);
+                        }}
+                      >
+                        <img
+                          src={uploadedItem.url}
+                          alt={itemInfo.title}
+                          title={uploadedItem.url}
+                          className='w-full h-32 object-cover'
+                        />
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

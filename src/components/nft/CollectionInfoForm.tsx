@@ -2,7 +2,6 @@ import { PasteInput } from '@/components/PasteInput';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'react-toastify';
 
 export interface CollectionInfo {
   description: string;
@@ -10,7 +9,6 @@ export interface CollectionInfo {
   sponsor: string;
   twitterHandle: string;
   website: string;
-  licenseUrl: string;
 }
 
 interface CollectionInfoFormProps {
@@ -27,30 +25,6 @@ export default function CollectionInfoForm({
       ...collectionInfo,
       [field]: value,
     });
-  };
-
-  const isFormValid = () => {
-    return (
-      collectionInfo.description.trim() !== '' &&
-      collectionInfo.author.trim() !== '' &&
-      collectionInfo.sponsor.trim() !== ''
-    );
-  };
-
-  const validateForm = () => {
-    if (!collectionInfo.description.trim()) {
-      toast.error('Theme description is required');
-      return false;
-    }
-    if (!collectionInfo.author.trim()) {
-      toast.error('Author name is required');
-      return false;
-    }
-    if (!collectionInfo.sponsor.trim()) {
-      toast.error('Sponsor is required');
-      return false;
-    }
-    return true;
   };
 
   return (
@@ -109,17 +83,6 @@ export default function CollectionInfoForm({
           placeholder='https://yourwebsite.com'
           value={collectionInfo.website}
           onChange={(e) => handleInputChange('website', e.target.value)}
-        />
-      </div>
-
-      {/* License URL */}
-      <div className='space-y-2'>
-        <Label htmlFor='license'>License URL (optional)</Label>
-        <PasteInput
-          id='license'
-          placeholder='https://license-url.com'
-          value={collectionInfo.licenseUrl}
-          onChange={(e) => handleInputChange('licenseUrl', e.target.value)}
         />
       </div>
     </div>

@@ -2,10 +2,12 @@ import Header from '@/components/Header';
 import Layout from '@/components/Layout';
 import CollectionInfoForm from '@/components/nft/CollectionInfoForm';
 import NftImagesForm from '@/components/nft/NftImagesForm';
+import UploadMetadata from '@/components/nft/UploadMetadata';
 import UploadToIPFS from '@/components/nft/UploadToIPFS';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useCollectionInfo } from '@/hooks/useCollectionInfo';
+import { useUploadedUrls } from '@/hooks/useUploadedUrls';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +16,7 @@ export default function PrepareNft() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const { collectionInfo, updateCollectionInfo } = useCollectionInfo();
+  const { uploadedUrls } = useUploadedUrls();
 
   const handleBack = () => {
     navigate(-1);
@@ -27,12 +30,20 @@ export default function PrepareNft() {
     setCurrentStep(3);
   };
 
+  const handleNextStep4 = () => {
+    setCurrentStep(4);
+  };
+
   const handlePrevStep = () => {
     setCurrentStep(1);
   };
 
   const handlePrevStep2 = () => {
     setCurrentStep(2);
+  };
+
+  const handlePrevStep3 = () => {
+    setCurrentStep(3);
   };
 
   const isFormValid = () => {
@@ -44,10 +55,15 @@ export default function PrepareNft() {
           collectionInfo.sponsor.trim() !== ''
         );
       case 2:
-        // Check if NFT icon is uploaded
-        return localStorage.getItem('nft-icon') !== null;
+        // Check if NFT icon is uploaded OR if there are uploaded URLs from step 3
+        return (
+          localStorage.getItem('nft-icon') !== null || uploadedUrls.length > 0
+        );
       case 3:
-        // No validation needed for upload step
+        // Check if files have been uploaded
+        return uploadedUrls.length > 0;
+      case 4:
+        // No validation needed for metadata step
         return true;
       default:
         return false;
@@ -68,6 +84,7 @@ export default function PrepareNft() {
                     {currentStep === 1 && 'Collection Information'}
                     {currentStep === 2 && 'NFT Images'}
                     {currentStep === 3 && 'Upload to IPFS'}
+                    {currentStep === 4 && 'Generate Metadata'}
                   </h2>
                   <p className='text-muted-foreground'>
                     {currentStep === 1 &&
@@ -76,6 +93,8 @@ export default function PrepareNft() {
                       'Upload images for your NFT collection. The NFT icon is required.'}
                     {currentStep === 3 &&
                       'Review your images and upload them to create your NFT collection.'}
+                    {currentStep === 4 &&
+                      'Generate OpenSea-compatible metadata for your NFT collection.'}
                   </p>
                 </div>
 
@@ -87,7 +106,9 @@ export default function PrepareNft() {
                         ? handleBack
                         : currentStep === 2
                           ? handlePrevStep
-                          : handlePrevStep2
+                          : currentStep === 3
+                            ? handlePrevStep2
+                            : handlePrevStep3
                     }
                     className='flex items-center gap-2'
                   >
@@ -95,10 +116,14 @@ export default function PrepareNft() {
                     Back
                   </Button>
 
-                  {currentStep < 3 && (
+                  {currentStep < 4 && (
                     <Button
                       onClick={
-                        currentStep === 1 ? handleNextStep : handleNextStep3
+                        currentStep === 1
+                          ? handleNextStep
+                          : currentStep === 2
+                            ? handleNextStep3
+                            : handleNextStep4
                       }
                       disabled={!isFormValid()}
                       className='flex items-center gap-2'
@@ -118,8 +143,10 @@ export default function PrepareNft() {
                 />
               ) : currentStep === 2 ? (
                 <NftImagesForm />
-              ) : (
+              ) : currentStep === 3 ? (
                 <UploadToIPFS />
+              ) : (
+                <UploadMetadata />
               )}
             </CardContent>
           </Card>
