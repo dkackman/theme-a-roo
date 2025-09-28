@@ -4,17 +4,12 @@ import { Label } from '@/components/ui/label';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { isTauriEnvironment } from '@/lib/utils';
 import html2canvas from 'html2canvas-pro';
-import { ArrowLeft, ArrowRight, Download, Upload, X } from 'lucide-react';
+import { Download, Upload, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { applyThemeIsolated, useTheme } from 'theme-o-rama';
 
-interface NftImagesFormProps {
-  onBack: () => void;
-  onNext: () => void;
-}
-
-export default function NftImagesForm({ onBack, onNext }: NftImagesFormProps) {
+export default function NftImagesForm() {
   const { currentTheme } = useTheme();
   const { getBackgroundImage } = useWorkingThemeState();
   const previewRef = useRef<HTMLDivElement>(null);
@@ -89,10 +84,6 @@ export default function NftImagesForm({ onBack, onNext }: NftImagesFormProps) {
       }
       handleImageUpload(file, setter);
     }
-  };
-
-  const isFormValid = () => {
-    return nftIcon !== null;
   };
 
   const downloadForWeb = (canvas: HTMLCanvasElement, filename: string) => {
@@ -185,14 +176,7 @@ export default function NftImagesForm({ onBack, onNext }: NftImagesFormProps) {
   }
 
   return (
-    <div className='max-w-4xl mx-auto space-y-8'>
-      <div className='text-center'>
-        <h2 className='text-2xl font-bold mb-2'>NFT Images</h2>
-        <p className='text-muted-foreground'>
-          Upload images for your NFT collection. The NFT icon is required.
-        </p>
-      </div>
-
+    <div className='max-w-4xl mx-auto'>
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
         {/* Left Column - NFT Icon */}
         <div className='space-y-4'>
@@ -444,26 +428,6 @@ export default function NftImagesForm({ onBack, onNext }: NftImagesFormProps) {
             </Card>
           )}
         </div>
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className='flex justify-between w-full pt-6'>
-        <Button
-          variant='outline'
-          onClick={onBack}
-          className='flex items-center gap-2'
-        >
-          <ArrowLeft className='w-4 h-4' />
-          Back to Info
-        </Button>
-        <Button
-          onClick={onNext}
-          disabled={!isFormValid()}
-          className='flex items-center gap-2'
-        >
-          Next Step
-          <ArrowRight className='w-4 h-4' />
-        </Button>
       </div>
     </div>
   );

@@ -10,17 +10,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { IPFSFile, IPFSManager, IPFSProvider } from '@/lib/ipfs';
+import { Upload } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 
-interface UploadToIPFSProps {
-  onBack: () => void;
-}
-
-export default function UploadToIPFS({ onBack }: UploadToIPFSProps) {
+export default function UploadToIPFS() {
   const { getBackgroundImage } = useWorkingThemeState();
   const [ipfsProvider, setIpfsProvider] = useState<string>('filebase');
   const [apiKey, setApiKey] = useState<string>('');
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   // Load saved IPFS provider from localStorage
   useEffect(() => {
@@ -46,9 +45,107 @@ export default function UploadToIPFS({ onBack }: UploadToIPFSProps) {
       : null;
   })();
 
-  const handleUpload = () => {
-    // TODO: Implement actual upload functionality
-    console.log('Upload functionality to be implemented');
+  const handleUpload = async () => {
+    if (!apiKey.trim()) {
+      toast.error('API key is required');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Create IPFS manager
+      const ipfsManager = new IPFSManager(ipfsProvider as IPFSProvider, {
+        apiKey: apiKey.trim(),
+      });
+
+      // Prepare files for upload
+      const filesToUpload: IPFSFile[] = [];
+
+      if (nftIcon) {
+        filesToUpload.push(
+          IPFSManager.createFileFromDataUrl(
+            nftIcon,
+            'nft-icon.png',
+            'image/png',
+          ),
+        );
+      }
+
+      if (collectionBanner) {
+        filesToUpload.push(
+          IPFSManager.createFileFromDataUrl(
+            collectionBanner,
+            'collection-banner.png',
+            'image/png',
+          ),
+        );
+      }
+
+      if (backgroundImage) {
+        filesToUpload.push(
+          IPFSManager.createFileFromDataUrl(
+            backgroundImage,
+            'background-image.png',
+            'image/png',
+          ),
+        );
+      }
+
+      if (filesToUpload.length === 0) {
+        toast.error('No images to upload');
+        return;
+      }
+
+      toast.info(
+        `Uploading ${filesToUpload.length} files to ${ipfsProvider}...`,
+      );
+
+      // Upload files
+      const results = await ipfsManager.uploadFiles(filesToUpload, {
+        pinToIPFS: true,
+        metadata: {
+          themeName: 'Theme NFT',
+          uploadedAt: new Date().toISOString(),
+        },
+      });
+
+      // Check results
+      const successCount = results.filter((r) => r.success).length;
+      const failedCount = results.length - successCount;
+
+      if (successCount > 0) {
+        toast.success(`Successfully uploaded ${successCount} files to IPFS!`);
+
+        // Log successful uploads
+        results.forEach((result, index) => {
+          if (result.success) {
+            console.log(`File ${filesToUpload[index].name}:`, {
+              hash: result.hash,
+              url: result.url,
+            });
+          }
+        });
+      }
+
+      if (failedCount > 0) {
+        toast.error(`${failedCount} files failed to upload`);
+        results.forEach((result, index) => {
+          if (!result.success) {
+            console.error(
+              `File ${filesToUpload[index].name} failed:`,
+              result.error,
+            );
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(
+        `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const imagesToUpload = [
@@ -80,13 +177,6 @@ export default function UploadToIPFS({ onBack }: UploadToIPFSProps) {
 
   return (
     <div className='max-w-4xl mx-auto space-y-8'>
-      <div className='text-center'>
-        <h2 className='text-2xl font-bold mb-2'>Upload to IPFS</h2>
-        <p className='text-muted-foreground'>
-          Review your images and upload them to create your NFT collection.
-        </p>
-      </div>
-
       {/* IPFS Provider Selection */}
       <Card>
         <CardHeader>
@@ -164,27 +254,24 @@ export default function UploadToIPFS({ onBack }: UploadToIPFSProps) {
         <div className='flex justify-center'>
           <Button
             onClick={handleUpload}
-            disabled={!requiredImagesUploaded}
+            disabled={!requiredImagesUploaded || !apiKey.trim() || isUploading}
             size='lg'
             className='px-8 py-3'
           >
-            <Upload className='w-5 h-5 mr-2' />
-            Upload to {ipfsProvider === 'filebase' ? 'Filebase' : 'Pinata'}
+            {isUploading ? (
+              <>
+                <div className='animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2' />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className='w-5 h-5 mr-2' />
+                Upload to {ipfsProvider === 'filebase' ? 'Filebase' : 'Pinata'}
+              </>
+            )}
           </Button>
         </div>
       )}
-
-      {/* Navigation */}
-      <div className='flex justify-between w-full pt-6'>
-        <Button
-          variant='outline'
-          onClick={onBack}
-          className='flex items-center gap-2'
-        >
-          <ArrowLeft className='w-4 h-4' />
-          Back to Images
-        </Button>
-      </div>
     </div>
   );
 }
