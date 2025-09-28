@@ -69,7 +69,7 @@ export default function CollectionInfoForm({
         <Label htmlFor='twitter'>Twitter Handle (optional)</Label>
         <Input
           id='twitter'
-          placeholder='@yourhandle'
+          placeholder='yourhandle'
           value={collectionInfo.twitterHandle}
           onChange={(e) => handleInputChange('twitterHandle', e.target.value)}
         />
