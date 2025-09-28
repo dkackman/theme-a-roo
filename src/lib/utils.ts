@@ -230,3 +230,64 @@ export function saveDataUriAsFile(
     throw new Error('Failed to save image');
   }
 }
+
+// Helper function to save image from URL by extracting data from img element
+export function saveImageAsFile(
+  imageUrl: string,
+  filename = 'image.png',
+): void {
+  try {
+    // Create a new image element to load the image
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // Enable CORS for cross-origin images
+
+    img.onload = () => {
+      try {
+        // Create a canvas element
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+          throw new Error('Could not get canvas context');
+        }
+
+        // Set canvas dimensions to match the image
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+
+        // Draw the image onto the canvas
+        ctx.drawImage(img, 0, 0);
+
+        // Convert canvas to blob
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            throw new Error('Failed to convert canvas to blob');
+          }
+
+          // Create download link
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 'image/png'); // Default to PNG format
+      } catch (error) {
+        console.error('Error processing image:', error);
+        throw new Error('Failed to process image');
+      }
+    };
+
+    img.onerror = () => {
+      throw new Error('Failed to load image');
+    };
+
+    // Start loading the image
+    img.src = imageUrl;
+  } catch (error) {
+    console.error('Error saving image:', error);
+    throw new Error('Failed to save image');
+  }
+}

@@ -14,7 +14,7 @@ import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { STORAGE_KEYS } from '@/lib/constants';
 import { generateImage, isOpenAIInitialized } from '@/lib/opeanai';
-import { saveDataUriAsFile } from '@/lib/utils';
+import { saveDataUriAsFile, saveImageAsFile } from '@/lib/utils';
 import { readClipboardText } from '@/lib/web-fallbacks';
 import { Download, Link, Sparkles, Upload, X } from 'lucide-react';
 import { useState } from 'react';
@@ -143,8 +143,12 @@ export function BackgroundImageEditor() {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `background-image-${timestamp}.png`;
 
-      saveDataUriAsFile(backgroundImageUrl, filename);
-      toast.success('Image saved successfully!');
+      if (backgroundImageUrl.startsWith('data:')) {
+        saveDataUriAsFile(backgroundImageUrl, filename);
+      } else {
+        saveImageAsFile(backgroundImageUrl, filename);
+      }
+      toast.success('Image saved to your downloads folder.');
     } catch (error) {
       console.error('Error saving image:', error);
       toast.error('Failed to save image');
