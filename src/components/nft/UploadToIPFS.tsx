@@ -2,37 +2,15 @@ import { PasteInput } from '@/components/PasteInput';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
-import { IPFSFile, IPFSManager, IPFSProvider } from '@/lib/ipfs';
 import { Upload } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function UploadToIPFS() {
   const { getBackgroundImage } = useWorkingThemeState();
-  const [ipfsProvider, setIpfsProvider] = useState<string>('filebase');
   const [apiKey, setApiKey] = useState<string>('');
   const [isUploading, setIsUploading] = useState<boolean>(false);
-
-  // Load saved IPFS provider from localStorage
-  useEffect(() => {
-    const savedProvider = localStorage.getItem('ipfs-provider');
-    if (savedProvider) {
-      setIpfsProvider(savedProvider);
-    }
-  }, []);
-
-  // Save IPFS provider to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('ipfs-provider', ipfsProvider);
-  }, [ipfsProvider]);
 
   // Get images from localStorage
   const nftIcon = localStorage.getItem('nft-icon');
@@ -184,24 +162,10 @@ export default function UploadToIPFS() {
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='space-y-2'>
-            <Label htmlFor='ipfs-provider'>Choose your IPFS provider</Label>
-            <Select value={ipfsProvider} onValueChange={setIpfsProvider}>
-              <SelectTrigger id='ipfs-provider'>
-                <SelectValue placeholder='Select IPFS provider' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='filebase'>Filebase</SelectItem>
-                <SelectItem value='pinata'>Pinata</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='api-key'>
-              {ipfsProvider === 'filebase' ? 'Filebase' : 'Pinata'} API Key
-            </Label>
+            <Label htmlFor='api-key'>Pinata API Key</Label>
             <PasteInput
               id='api-key'
-              placeholder={`Enter your ${ipfsProvider === 'filebase' ? 'Filebase' : 'Pinata'} API key`}
+              placeholder={`Enter your Pinata API key`}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               type='password'
@@ -266,7 +230,7 @@ export default function UploadToIPFS() {
             ) : (
               <>
                 <Upload className='w-5 h-5 mr-2' />
-                Upload to {ipfsProvider === 'filebase' ? 'Filebase' : 'Pinata'}
+                Upload to Pinata
               </>
             )}
           </Button>
