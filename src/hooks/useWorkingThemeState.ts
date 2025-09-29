@@ -139,7 +139,7 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
             }));
           } catch (error) {
             console.error(
-              '❌ Failed to store background image in IndexedDB:',
+              'Failed to store background image in IndexedDB:',
               error,
             );
             // Fallback to direct storage
