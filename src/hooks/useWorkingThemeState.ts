@@ -25,6 +25,7 @@ interface WorkingThemeState {
   setBackdropFilters: (enabled: boolean) => void;
   getBackdropFilters: () => boolean;
 }
+
 export const DESIGN_THEME_NAME = 'theme-a-roo-custom-theme';
 
 const DEFAULT_THEME = {
@@ -34,6 +35,8 @@ const DEFAULT_THEME = {
   inherits: 'light' as const,
   mostLike: 'light' as const,
   colors: {
+    background: 'lightgray',
+    foreground: '#2C323C',
     themeColor: 'hsl(92, 20%, 42%)',
     primary: '#324053',
     primaryForeground: '#dfff75',
@@ -234,8 +237,8 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         const theme = get().WorkingTheme;
         return Boolean(
           theme.colors?.cardBackdropFilter ||
-            theme.colors?.popoverBackdropFilter ||
-            theme.colors?.inputBackdropFilter,
+          theme.colors?.popoverBackdropFilter ||
+          theme.colors?.inputBackdropFilter,
         );
       },
     }),
@@ -265,14 +268,14 @@ export const useWorkingThemeState = () => {
     const hasBackdropFilters = Boolean(
       // Colors backdrop filters
       initializedTheme.colors?.cardBackdropFilter ||
-        initializedTheme.colors?.popoverBackdropFilter ||
-        initializedTheme.colors?.inputBackdropFilter ||
-        // Sidebar backdrop filter
-        initializedTheme.sidebar?.backdropFilter ||
-        // Table backdrop filters
-        initializedTheme.tables?.header?.backdropFilter ||
-        initializedTheme.tables?.row?.backdropFilter ||
-        initializedTheme.tables?.footer?.backdropFilter,
+      initializedTheme.colors?.popoverBackdropFilter ||
+      initializedTheme.colors?.inputBackdropFilter ||
+      // Sidebar backdrop filter
+      initializedTheme.sidebar?.backdropFilter ||
+      // Table backdrop filters
+      initializedTheme.tables?.header?.backdropFilter ||
+      initializedTheme.tables?.row?.backdropFilter ||
+      initializedTheme.tables?.footer?.backdropFilter,
     );
 
     return hasBackdropFilters;

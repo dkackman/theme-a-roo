@@ -19,7 +19,10 @@ import {
 } from '@/components/ui/select';
 import { useErrors } from '@/hooks/useErrors';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
-import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
+import {
+  DESIGN_THEME_NAME,
+  useWorkingThemeState,
+} from '@/hooks/useWorkingThemeState';
 import { isTauriEnvironment } from '@/lib/utils';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
@@ -41,7 +44,7 @@ const needsBackgroundImageUpload = (backgroundImage: string): boolean => {
 
 export function ThemeActions() {
   const { addError } = useErrors();
-  const { currentTheme, setCustomTheme } = useTheme();
+  const { currentTheme, setCustomTheme, setTheme } = useTheme();
   const navigate = useNavigate();
   const {
     WorkingTheme,
@@ -93,17 +96,18 @@ export function ThemeActions() {
   }, [navigate]);
 
   const handleClearTheme = useCallback(async () => {
-    clearWorkingTheme();
+    await clearWorkingTheme();
     // Apply the working theme to ensure it becomes selected
     try {
-      const initializedTheme = await getInitializedWorkingTheme();
-      const workingThemeJson = JSON.stringify(initializedTheme);
-      await setCustomTheme(workingThemeJson);
+      // Reload themes to pick up the reset working theme from localStorage
+      //await reloadThemes();
+      // Use setTheme with the theme name (same as clicking the working theme card)
+      setTheme(DESIGN_THEME_NAME);
     } catch (error) {
       console.error('Failed to apply reset theme:', error);
     }
     setShowResetConfirm(false);
-  }, [clearWorkingTheme, getInitializedWorkingTheme, setCustomTheme]);
+  }, [clearWorkingTheme, setTheme]);
 
   const handleStartWithThisTheme = useCallback(async () => {
     if (currentTheme) {

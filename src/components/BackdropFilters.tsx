@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 export function BackdropFilters() {
   const {
-    getBackdropFilters,
+    WorkingTheme,
     setBackdropFilters: setBackdropFiltersHook,
     getBackgroundImage,
   } = useWorkingThemeState();
@@ -20,19 +20,38 @@ export function BackdropFilters() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [backdropFiltersResult, backgroundImageResult] =
-          await Promise.all([getBackdropFilters(), getBackgroundImage()]);
-        setBackdropFilters(backdropFiltersResult);
+        console.log('Loading backdrop filters data...');
+
+        // Check backdrop filters synchronously from WorkingTheme
+        const hasBackdropFilters = Boolean(
+          WorkingTheme.colors?.cardBackdropFilter ||
+            WorkingTheme.colors?.popoverBackdropFilter ||
+            WorkingTheme.colors?.inputBackdropFilter ||
+            WorkingTheme.sidebar?.backdropFilter ||
+            WorkingTheme.tables?.header?.backdropFilter ||
+            WorkingTheme.tables?.row?.backdropFilter ||
+            WorkingTheme.tables?.footer?.backdropFilter,
+        );
+
+        const backgroundImageResult = await getBackgroundImage();
+
+        console.log('Backdrop filters result:', hasBackdropFilters);
+        console.log('Background image result:', backgroundImageResult);
+
+        setBackdropFilters(hasBackdropFilters);
         setBackgroundImage(backgroundImageResult);
       } catch (error) {
         console.error('Failed to load backdrop filters data:', error);
+        // Set default values on error
+        setBackdropFilters(false);
+        setBackgroundImage(null);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [getBackdropFilters, getBackgroundImage]);
+  }, [WorkingTheme, getBackgroundImage]);
 
   const disabled = !isWorkingThemeSelected || !backgroundImage || isLoading;
 
