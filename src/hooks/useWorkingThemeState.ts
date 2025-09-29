@@ -237,8 +237,8 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         const theme = get().WorkingTheme;
         return Boolean(
           theme.colors?.cardBackdropFilter ||
-          theme.colors?.popoverBackdropFilter ||
-          theme.colors?.inputBackdropFilter,
+            theme.colors?.popoverBackdropFilter ||
+            theme.colors?.inputBackdropFilter,
         );
       },
     }),
@@ -268,14 +268,14 @@ export const useWorkingThemeState = () => {
     const hasBackdropFilters = Boolean(
       // Colors backdrop filters
       initializedTheme.colors?.cardBackdropFilter ||
-      initializedTheme.colors?.popoverBackdropFilter ||
-      initializedTheme.colors?.inputBackdropFilter ||
-      // Sidebar backdrop filter
-      initializedTheme.sidebar?.backdropFilter ||
-      // Table backdrop filters
-      initializedTheme.tables?.header?.backdropFilter ||
-      initializedTheme.tables?.row?.backdropFilter ||
-      initializedTheme.tables?.footer?.backdropFilter,
+        initializedTheme.colors?.popoverBackdropFilter ||
+        initializedTheme.colors?.inputBackdropFilter ||
+        // Sidebar backdrop filter
+        initializedTheme.sidebar?.backdropFilter ||
+        // Table backdrop filters
+        initializedTheme.tables?.header?.backdropFilter ||
+        initializedTheme.tables?.row?.backdropFilter ||
+        initializedTheme.tables?.footer?.backdropFilter,
     );
 
     return hasBackdropFilters;
