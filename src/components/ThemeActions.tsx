@@ -19,10 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useErrors } from '@/hooks/useErrors';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
-import {
-  DESIGN_THEME_NAME,
-  useWorkingThemeState,
-} from '@/hooks/useWorkingThemeState';
+import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { isTauriEnvironment } from '@/lib/utils';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
@@ -95,40 +92,30 @@ export function ThemeActions() {
     navigate('/prepare-nft');
   }, [navigate]);
 
-  const handleClearTheme = useCallback(() => {
+  const handleClearTheme = useCallback(async () => {
     clearWorkingTheme();
-    // Apply the reset working theme immediately and ensure it's selected
-    const initializedTheme = getInitializedWorkingTheme();
-    // Ensure the theme name is correct for selection detection
-    const workingThemeWithCorrectName = {
-      ...initializedTheme,
-      name: DESIGN_THEME_NAME,
-    };
-    const workingThemeJson = JSON.stringify(
-      workingThemeWithCorrectName,
-      null,
-      2,
-    );
-    setCustomTheme(workingThemeJson);
+    // Apply the working theme to ensure it becomes selected
+    try {
+      const initializedTheme = await getInitializedWorkingTheme();
+      const workingThemeJson = JSON.stringify(initializedTheme);
+      await setCustomTheme(workingThemeJson);
+    } catch (error) {
+      console.error('Failed to apply reset theme:', error);
+    }
     setShowResetConfirm(false);
   }, [clearWorkingTheme, getInitializedWorkingTheme, setCustomTheme]);
 
-  const handleStartWithThisTheme = useCallback(() => {
+  const handleStartWithThisTheme = useCallback(async () => {
     if (currentTheme) {
       setWorkingThemeFromCurrent(currentTheme);
-      // Apply the working theme immediately and ensure it's selected
-      const initializedTheme = getInitializedWorkingTheme();
-      // Ensure the theme name is correct for selection detection
-      const workingThemeWithCorrectName = {
-        ...initializedTheme,
-        name: DESIGN_THEME_NAME,
-      };
-      const workingThemeJson = JSON.stringify(
-        workingThemeWithCorrectName,
-        null,
-        2,
-      );
-      setCustomTheme(workingThemeJson);
+      // Apply the working theme to ensure it becomes selected
+      try {
+        const initializedTheme = await getInitializedWorkingTheme();
+        const workingThemeJson = JSON.stringify(initializedTheme);
+        await setCustomTheme(workingThemeJson);
+      } catch (error) {
+        console.error('Failed to apply start with theme:', error);
+      }
     }
     setShowStartWithConfirm(false);
   }, [
@@ -220,17 +207,13 @@ export function ThemeActions() {
           checkBackgroundImageAndWarn(WorkingTheme);
 
           // Apply the imported theme immediately
-          const initializedTheme = getInitializedWorkingTheme();
-          const workingThemeWithCorrectName = {
-            ...initializedTheme,
-            name: DESIGN_THEME_NAME,
-          };
-          const workingThemeJson = JSON.stringify(
-            workingThemeWithCorrectName,
-            null,
-            2,
-          );
-          setCustomTheme(workingThemeJson);
+          try {
+            const initializedTheme = await getInitializedWorkingTheme();
+            const workingThemeJson = JSON.stringify(initializedTheme);
+            await setCustomTheme(workingThemeJson);
+          } catch (error) {
+            console.error('Failed to apply imported theme:', error);
+          }
         }
       } catch (error) {
         console.error('Error opening theme file:', error);
@@ -393,24 +376,20 @@ export function ThemeActions() {
             const file = e.target.files?.[0];
             if (file) {
               const reader = new FileReader();
-              reader.onload = (event) => {
+              reader.onload = async (event) => {
                 const fileContent = event.target?.result as string;
                 try {
                   setWorkingThemeFromJson(fileContent);
                   checkBackgroundImageAndWarn(WorkingTheme);
 
                   // Apply the imported theme immediately
-                  const initializedTheme = getInitializedWorkingTheme();
-                  const workingThemeWithCorrectName = {
-                    ...initializedTheme,
-                    name: DESIGN_THEME_NAME,
-                  };
-                  const workingThemeJson = JSON.stringify(
-                    workingThemeWithCorrectName,
-                    null,
-                    2,
-                  );
-                  setCustomTheme(workingThemeJson);
+                  try {
+                    const initializedTheme = await getInitializedWorkingTheme();
+                    const workingThemeJson = JSON.stringify(initializedTheme);
+                    await setCustomTheme(workingThemeJson);
+                  } catch (error) {
+                    console.error('Failed to apply imported theme:', error);
+                  }
                 } catch (error) {
                   console.error('Error loading theme file:', error);
                   addError({

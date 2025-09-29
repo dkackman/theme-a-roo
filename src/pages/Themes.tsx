@@ -21,21 +21,78 @@ import {
   Loader2,
   Palette,
 } from 'lucide-react';
-import { useTheme } from 'theme-o-rama';
-import { useLocalStorage } from 'usehooks-ts';
+import { useEffect, useState } from 'react';
+import { Theme, useTheme } from 'theme-o-rama';
 
 export default function Themes() {
-  const { currentTheme, setCustomTheme, isLoading } = useTheme();
-  const { getInitializedWorkingTheme } = useWorkingThemeState();
-  const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
+  const { currentTheme, setTheme, reloadThemes, availableThemes, isLoading } =
+    useTheme();
+  const { getInitializedWorkingTheme, WorkingTheme } = useWorkingThemeState();
+  const { isWorkingThemeSelected, setManuallyApplying } =
+    useWorkingThemeAutoApply();
 
   const [isActionsPanelMinimized, setIsActionsPanelMinimized] =
-    useLocalStorage<boolean>(STORAGE_KEYS.ACTIONS_PANEL_MINIMIZED, false);
+    useState<boolean>(false);
+  const [workingTheme, setWorkingTheme] = useState<Theme | null>(null);
 
-  const handleApplyWorkingTheme = () => {
-    const workingThemeJson = JSON.stringify(getInitializedWorkingTheme());
-    if (workingThemeJson && workingThemeJson.trim()) {
-      setCustomTheme(workingThemeJson);
+  // Load actions panel minimized state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem(
+      STORAGE_KEYS.ACTIONS_PANEL_MINIMIZED,
+    );
+    if (savedState !== null) {
+      setIsActionsPanelMinimized(JSON.parse(savedState));
+    }
+  }, []);
+
+  // Save actions panel minimized state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEYS.ACTIONS_PANEL_MINIMIZED,
+      JSON.stringify(isActionsPanelMinimized),
+    );
+  }, [isActionsPanelMinimized]);
+
+  // Load working theme asynchronously and update when WorkingTheme changes
+  useEffect(() => {
+    const loadWorkingTheme = async () => {
+      try {
+        const theme = await getInitializedWorkingTheme();
+        setWorkingTheme(theme);
+      } catch (error) {
+        console.error('Failed to load working theme:', error);
+      }
+    };
+
+    loadWorkingTheme();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [WorkingTheme]); // Update when WorkingTheme changes (reset, inherits, mostLike, etc.)
+
+  const handleApplyWorkingTheme = async () => {
+    // Signal that we're manually applying to prevent auto-apply conflicts
+    setManuallyApplying(true);
+
+    try {
+      const theme = await getInitializedWorkingTheme();
+      const workingThemeJson = JSON.stringify(theme);
+      if (workingThemeJson && workingThemeJson.trim()) {
+        // Check if working theme is already discoverable
+        const isWorkingThemeDiscoverable = availableThemes.some(
+          (t) => t.name === theme.name,
+        );
+
+        if (!isWorkingThemeDiscoverable) {
+          await reloadThemes();
+        }
+
+        // Apply the working theme
+        setTheme(theme.name);
+      }
+    } catch (error) {
+      console.error('Failed to apply working theme:', error);
+    } finally {
+      // Reset manual applying flag
+      setManuallyApplying(false);
     }
   };
 
@@ -139,15 +196,14 @@ export default function Themes() {
                     <h3 className='text-sm font-medium mb-3'>
                       Work in Progress
                     </h3>
-                    <ThemeCard
-                      theme={getInitializedWorkingTheme()}
-                      currentTheme={currentTheme}
-                      isSelected={
-                        isWorkingThemeSelected ||
-                        currentTheme?.name === 'my-custom-theme'
-                      }
-                      onSelect={() => handleApplyWorkingTheme()}
-                    />
+                    {workingTheme && (
+                      <ThemeCard
+                        theme={workingTheme}
+                        currentTheme={currentTheme}
+                        isSelected={isWorkingThemeSelected}
+                        onSelect={() => handleApplyWorkingTheme()}
+                      />
+                    )}
                   </div>
 
                   <ThemeSelector />

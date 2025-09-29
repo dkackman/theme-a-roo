@@ -17,6 +17,7 @@ export default function PrepareNft() {
   const [currentStep, setCurrentStep] = useState(1);
   const { collectionInfo, updateCollectionInfo } = useCollectionInfo();
   const { uploadedUrls } = useUploadedUrls();
+  const [hasNftIcon, setHasNftIcon] = useState(false);
 
   const handleBack = () => {
     navigate(-1);
@@ -55,10 +56,8 @@ export default function PrepareNft() {
           collectionInfo.sponsor.trim() !== ''
         );
       case 2:
-        // Check if NFT icon is uploaded OR if there are uploaded URLs from step 3
-        return (
-          localStorage.getItem('nft-icon') !== null || uploadedUrls.length > 0
-        );
+        // NFT icon is required for step 2
+        return hasNftIcon;
       case 3:
         // Check if files have been uploaded
         return uploadedUrls.length > 0;
@@ -142,7 +141,7 @@ export default function PrepareNft() {
                   onInfoChange={updateCollectionInfo}
                 />
               ) : currentStep === 2 ? (
-                <NftImagesForm />
+                <NftImagesForm onNftIconChange={setHasNftIcon} />
               ) : currentStep === 3 ? (
                 <UploadToIPFS />
               ) : (

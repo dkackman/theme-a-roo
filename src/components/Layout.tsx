@@ -9,10 +9,9 @@ import iconDark from '@/icon-dark.png';
 import iconLight from '@/icon-light.png';
 import { STORAGE_KEYS } from '@/lib/constants';
 import { PanelLeft, PanelLeftClose } from 'lucide-react';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from 'theme-o-rama';
-import { useLocalStorage } from 'usehooks-ts';
 import { TopNav } from './Nav';
 
 type LayoutProps = PropsWithChildren<object> & {
@@ -22,10 +21,23 @@ type LayoutProps = PropsWithChildren<object> & {
 export function FullLayout(props: LayoutProps) {
   const { currentTheme } = useTheme();
 
-  const [isCollapsed, setIsCollapsed] = useLocalStorage<boolean>(
-    STORAGE_KEYS.SIDEBAR_COLLAPSED,
-    false,
-  );
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+
+  // Load sidebar collapsed state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED);
+    if (savedState !== null) {
+      setIsCollapsed(JSON.parse(savedState));
+    }
+  }, []);
+
+  // Save sidebar collapsed state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEYS.SIDEBAR_COLLAPSED,
+      JSON.stringify(isCollapsed),
+    );
+  }, [isCollapsed]);
 
   const walletIcon = (
     <Link

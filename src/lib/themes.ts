@@ -1,5 +1,6 @@
 import { Theme, validateTheme } from 'theme-o-rama';
-import { STORAGE_KEYS } from './constants';
+import { IMAGE_STORAGE_KEYS } from './constants';
+import { imageStorage } from './imageStorage';
 
 export function hasTag(theme: Theme, tag: string): boolean {
   return theme.tags?.includes(tag) === true;
@@ -39,6 +40,14 @@ export async function discoverThemes(): Promise<Theme[]> {
       })
       .filter((theme): theme is Theme => theme !== null);
 
+    // Add the working theme as a discoverable theme
+    const workingThemeState = JSON.parse(
+      localStorage.getItem('working-theme-storage') || '{}',
+    );
+    if (workingThemeState?.state?.WorkingTheme) {
+      themeContents.push(workingThemeState.state.WorkingTheme);
+    }
+
     return themeContents;
   } catch (error) {
     console.warn('Could not discover theme folders:', error);
@@ -46,13 +55,24 @@ export async function discoverThemes(): Promise<Theme[]> {
   }
 }
 
-export function resolveThemeImage(
+export async function resolveThemeImage(
   themeName: string,
   imagePath: string,
-): string {
+): Promise<string> {
   // Check for sentinel value to return uploaded background image
-  if (imagePath === '{LOCAL_STORAGE}') {
-    return localStorage.getItem(STORAGE_KEYS.BACKGROUND_IMAGE) ?? '';
+  if (imagePath === '{INDEXED_DB}') {
+    try {
+      const storedImage = await imageStorage.getImage(
+        IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
+      );
+      return storedImage?.data ?? '';
+    } catch (error) {
+      console.error(
+        'Failed to retrieve background image from IndexedDB:',
+        error,
+      );
+      return '';
+    }
   }
 
   // Use static glob import to avoid dynamic import warnings for local files
