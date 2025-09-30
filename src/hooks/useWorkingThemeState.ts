@@ -49,7 +49,7 @@ async function refreshBlobUrls(state: WorkingThemeState) {
           backgroundImage: freshBlobUrl,
         });
       }
-      // If freshBlobUrl is null, the image was deleted from IndexedDB, so clear it
+      
       else if (!freshBlobUrl) {
         state.setTheme({
           ...state.WorkingTheme,
