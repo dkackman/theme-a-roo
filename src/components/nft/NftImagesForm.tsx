@@ -106,9 +106,9 @@ export default function NftImagesForm({ onNftIconChange }: NftImagesFormProps) {
     saveNftIcon();
   }, [nftIcon, isIntentionallyDeleting, onNftIconChange]);
 
-  // Note: Banner storage is now handled directly in handleImageUpload
-  // No need for separate useEffect since we store File objects directly
-
+  // Note: Banner storage is now handled directly in handleImageUpload.
+  // Banner image deletion is handled in handleImageUpload, without a separate useEffect for deletion tracking.
+  // If future requirements need explicit deletion tracking (like NFT icon), consider adding a useEffect.
   useEffect(() => {
     if (previewRef.current && currentTheme) {
       // Apply the theme with complete isolation from ambient theme
