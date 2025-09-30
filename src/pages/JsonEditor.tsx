@@ -280,9 +280,9 @@ export default function JsonEditor() {
                       contextmenu: true,
                       mouseWheelZoom: true,
                       smoothScrolling: true,
-                      theme: 'vs',
+                      theme:
+                        currentTheme?.mostLike === 'dark' ? 'vs-dark' : 'vs',
                     }}
-                    theme='vs'
                     loading={
                       <div className='flex items-center justify-center h-32'>
                         Loading editor...
