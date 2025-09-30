@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCollectionInfo } from '@/hooks/useCollectionInfo';
 import { useUploadedUrls } from '@/hooks/useUploadedUrls';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
+import { IMAGE_STORAGE_KEYS, STORAGE_KEYS } from '@/lib/constants';
+import { imageStorage } from '@/lib/imageStorage';
 import {
   detectMimeTypeFromBlob,
   getFileExtensionFromMimeType,
@@ -39,8 +41,8 @@ export default function UploadToIPFS() {
 
   // Load saved configuration from localStorage and sessionStorage
   useEffect(() => {
-    const savedGateway = localStorage.getItem('pinata-gateway');
-    const savedGroupName = localStorage.getItem('pinata-group-name');
+    const savedGateway = localStorage.getItem(STORAGE_KEYS.PINATA_GATEWAY);
+    const savedGroupName = localStorage.getItem(STORAGE_KEYS.PINATA_GROUP_NAME);
     const savedJwt = sessionStorage.getItem('pinata-jwt');
 
     if (savedGateway) {
@@ -57,14 +59,14 @@ export default function UploadToIPFS() {
   // Save gateway URL to localStorage whenever it changes
   useEffect(() => {
     if (gatewayUrl) {
-      localStorage.setItem('pinata-gateway', gatewayUrl);
+      localStorage.setItem(STORAGE_KEYS.PINATA_GATEWAY, gatewayUrl);
     }
   }, [gatewayUrl]);
 
   // Save group name to localStorage whenever it changes
   useEffect(() => {
     if (groupName) {
-      localStorage.setItem('pinata-group-name', groupName);
+      localStorage.setItem(STORAGE_KEYS.PINATA_GROUP_NAME, groupName);
     }
   }, [groupName]);
 
@@ -77,10 +79,41 @@ export default function UploadToIPFS() {
     }
   }, [apiKey]);
 
-  // Get images from localStorage
-  const nftIcon = localStorage.getItem('nft-icon');
-  const collectionBanner = localStorage.getItem('nft-banner');
-  const backgroundImage = getBackgroundImage();
+  // Get images from IndexedDB
+  const [nftIcon, setNftIcon] = useState<string | null>(null);
+  const [collectionBanner, setCollectionBanner] = useState<string | null>(null);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+
+  // Load images from IndexedDB
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        // Load NFT icon
+        const nftIconUrl = await imageStorage.getImageUrl(
+          IMAGE_STORAGE_KEYS.NFT_ICON_IMAGE,
+        );
+        if (nftIconUrl) {
+          setNftIcon(nftIconUrl);
+        }
+
+        // Load collection banner
+        const bannerUrl = await imageStorage.getImageUrl(
+          IMAGE_STORAGE_KEYS.NFT_BANNER_IMAGE,
+        );
+        if (bannerUrl) {
+          setCollectionBanner(bannerUrl);
+        }
+
+        // Load background image
+        const bgImage = await getBackgroundImage();
+        setBackgroundImage(bgImage);
+      } catch (error) {
+        console.error('Failed to load images from IndexedDB:', error);
+      }
+    };
+
+    loadImages();
+  }, [getBackgroundImage]);
 
   const handleUpload = async () => {
     if (!apiKey.trim() || !gatewayUrl.trim()) {
@@ -196,21 +229,21 @@ export default function UploadToIPFS() {
 
   const imagesToUpload = [
     {
-      id: 'nft-icon',
+      id: IMAGE_STORAGE_KEYS.NFT_ICON_IMAGE,
       title: 'NFT Icon',
       description: 'The main icon for your theme NFT',
       image: nftIcon,
       required: true,
     },
     {
-      id: 'collection-banner',
+      id: IMAGE_STORAGE_KEYS.NFT_BANNER_IMAGE,
       title: 'Collection Banner',
       description: 'Banner image for your collection (optional)',
       image: collectionBanner,
       required: false,
     },
     {
-      id: 'background-image',
+      id: IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
       title: 'Background Image',
       description: 'Theme background image (if available)',
       image: backgroundImage,

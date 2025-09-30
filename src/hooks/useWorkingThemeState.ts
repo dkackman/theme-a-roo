@@ -1,4 +1,5 @@
-import { STORAGE_KEYS } from '@/lib/constants';
+import { IMAGE_STORAGE_KEYS } from '@/lib/constants';
+import { imageStorage } from '@/lib/imageStorage';
 import { hslToRgb, makeValidFileName, rgbToHsl } from '@/lib/utils';
 import { Theme, useTheme } from 'theme-o-rama';
 import { create } from 'zustand';
@@ -13,18 +14,51 @@ interface WorkingThemeState {
   setThemeDisplayName: (displayName: string) => void;
   setInherits: (inherits: InheritsType) => void;
   setMostLike: (mostLike: MostLikeType) => void;
-  clearWorkingTheme: () => void;
+  clearWorkingTheme: () => Promise<void>;
   deriveThemeName: () => string;
   setWorkingThemeFromCurrent: (currentTheme: Theme) => void;
   setWorkingThemeFromJson: (json: string) => void;
   setThemeColor: ({ r, g, b }: { r: number; g: number; b: number }) => void;
   getThemeColor: () => { r: number; g: number; b: number };
-  setBackgroundImage: (url: string | null) => void;
-  getBackgroundImage: () => string | null;
+  setBackgroundImage: (url: string | File | null) => Promise<void>;
+  getBackgroundImage: () => Promise<string | null>;
   setBackdropFilters: (enabled: boolean) => void;
   getBackdropFilters: () => boolean;
+  refreshBlobUrls: () => Promise<void>;
 }
-export const DESIGN_THEME_NAME = 'theme-a-roo-working-theme';
+
+export const DESIGN_THEME_NAME = 'theme-a-roo-custom-theme';
+
+// Function to refresh blob URLs after store rehydration
+async function refreshBlobUrls(state: WorkingThemeState) {
+  try {
+    const backgroundImage = state.WorkingTheme.backgroundImage;
+
+    // Check if we have an old blob URL
+    if (backgroundImage && backgroundImage.startsWith('blob:')) {
+      // Get fresh blob URL from IndexedDB
+      const freshBlobUrl = await imageStorage.getImageUrl(
+        IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
+      );
+
+      if (freshBlobUrl) {
+        // Update the theme with the fresh blob URL
+        state.setTheme({
+          ...state.WorkingTheme,
+          backgroundImage: freshBlobUrl,
+        });
+      } else {
+        // Clear the invalid blob URL
+        state.setTheme({
+          ...state.WorkingTheme,
+          backgroundImage: undefined,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Failed to refresh blob URLs:', error);
+  }
+}
 
 const DEFAULT_THEME = {
   name: DESIGN_THEME_NAME,
@@ -33,6 +67,8 @@ const DEFAULT_THEME = {
   inherits: 'light' as const,
   mostLike: 'light' as const,
   colors: {
+    background: 'lightgray',
+    foreground: '#2C323C',
     themeColor: 'hsl(92, 20%, 42%)',
     primary: '#324053',
     primaryForeground: '#dfff75',
@@ -60,9 +96,16 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         set((state) => ({ WorkingTheme: { ...state.WorkingTheme, inherits } })),
       setMostLike: (mostLike: MostLikeType) =>
         set((state) => ({ WorkingTheme: { ...state.WorkingTheme, mostLike } })),
-      clearWorkingTheme: () => {
-        // Clear localStorage background image
-        localStorage.removeItem(STORAGE_KEYS.BACKGROUND_IMAGE);
+      clearWorkingTheme: async () => {
+        // Clear IndexedDB background image
+        try {
+          await imageStorage.deleteImage(IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE);
+        } catch (error) {
+          console.warn(
+            'Failed to clear background image from IndexedDB:',
+            error,
+          );
+        }
         set({ WorkingTheme: DEFAULT_THEME });
       },
       deriveThemeName: () => {
@@ -108,39 +151,55 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         );
         return rgb || { r: 220, g: 30, b: 15 };
       },
-      setBackgroundImage: (url: string | null) => {
-        if (url && (url.startsWith('data:') || url.startsWith('blob:'))) {
-          // Store data URI/blob in localStorage and use sentinel value
-          localStorage.setItem(STORAGE_KEYS.BACKGROUND_IMAGE, url);
-          set((state) => ({
-            WorkingTheme: {
-              ...state.WorkingTheme,
-              backgroundImage: '{LOCAL_STORAGE}',
-              colors: {
-                ...state.WorkingTheme.colors,
-                background: url ? 'transparent' : undefined,
+      setBackgroundImage: async (url: string | File | null) => {
+        if (
+          url &&
+          (url instanceof File ||
+            (typeof url === 'string' && url.startsWith('data:')))
+        ) {
+          try {
+            await imageStorage.storeImage(
+              IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
+              url,
+            );
+            const blobUrl = await imageStorage.getImageUrl(
+              IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
+            );
+            set((state) => ({
+              WorkingTheme: {
+                ...state.WorkingTheme,
+                backgroundImage: blobUrl || undefined,
+                colors: {
+                  ...state.WorkingTheme.colors,
+                  background: blobUrl ? 'transparent' : undefined,
+                },
               },
-            },
-          }));
+            }));
+          } catch (error) {
+            console.error(
+              'Failed to store background image in IndexedDB:',
+              error,
+            );
+            // Re-throw the error so it surfaces to the user
+            throw new Error(
+              `Failed to store background image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            );
+          }
         } else {
-          // Regular URL - store directly
           set((state) => ({
             WorkingTheme: {
               ...state.WorkingTheme,
-              backgroundImage: url || undefined,
+              backgroundImage: typeof url === 'string' ? url : undefined,
               colors: {
                 ...state.WorkingTheme.colors,
-                background: url ? 'transparent' : undefined,
+                background: typeof url === 'string' ? 'transparent' : undefined,
               },
             },
           }));
         }
       },
-      getBackgroundImage: () => {
+      getBackgroundImage: async () => {
         const backgroundImage = get().WorkingTheme.backgroundImage;
-        if (backgroundImage === '{LOCAL_STORAGE}') {
-          return localStorage.getItem(STORAGE_KEYS.BACKGROUND_IMAGE);
-        }
         return backgroundImage || null;
       },
       setBackdropFilters: (enabled: boolean) => {
@@ -198,9 +257,20 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
             theme.colors?.inputBackdropFilter,
         );
       },
+      refreshBlobUrls: async () => {
+        await refreshBlobUrls(get());
+      },
     }),
     {
       name: 'working-theme-storage', // unique name for localStorage key
+      onRehydrateStorage: () => {
+        return (state) => {
+          if (state) {
+            // Refresh blob URLs after rehydration
+            refreshBlobUrls(state);
+          }
+        };
+      },
     },
   ),
 );
@@ -210,16 +280,16 @@ export const useWorkingThemeState = () => {
   const store = useWorkingThemeStateStore();
   const themeContext = useTheme();
 
-  const getInitializedWorkingTheme = (): Theme => {
+  const getInitializedWorkingTheme = async (): Promise<Theme> => {
     if (store.WorkingTheme.name === DESIGN_THEME_NAME) {
-      return themeContext.initializeTheme(store.WorkingTheme);
+      return await themeContext.initializeTheme(store.WorkingTheme);
     }
 
     return store.WorkingTheme;
   };
 
-  const getBackdropFilters = () => {
-    const initializedTheme = getInitializedWorkingTheme();
+  const getBackdropFilters = async (): Promise<boolean> => {
+    const initializedTheme = await getInitializedWorkingTheme();
 
     // Check all backdrop filter properties in the theme
     const hasBackdropFilters = Boolean(

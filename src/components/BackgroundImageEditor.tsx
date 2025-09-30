@@ -17,29 +17,66 @@ import { generateImage, isOpenAIInitialized } from '@/lib/opeanai';
 import { saveDataUriAsFile, saveImageAsFile } from '@/lib/utils';
 import { readClipboardText } from '@/lib/web-fallbacks';
 import { Download, Link, Sparkles, Upload, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useLocalStorage } from 'usehooks-ts';
 
 export function BackgroundImageEditor() {
-  const { getThemeColor, getBackgroundImage, setBackgroundImage } =
-    useWorkingThemeState();
+  const {
+    getThemeColor,
+    getBackgroundImage,
+    setBackgroundImage,
+    WorkingTheme,
+  } = useWorkingThemeState();
   const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
 
-  const backgroundImageUrl = getBackgroundImage();
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(
+    null,
+  );
   const selectedColor = getThemeColor();
   const disabled = !isWorkingThemeSelected;
   const isOpenAIReady = isOpenAIInitialized();
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
-  const [selectedImageModel, setSelectedImageModel] = useLocalStorage<string>(
-    STORAGE_KEYS.IMAGE_MODEL,
-    'dall-e-3',
-  );
-  const [prompt, setPrompt] = useLocalStorage<string>(
-    STORAGE_KEYS.DESIGN_PROMPT,
-    '',
-  );
+  const [selectedImageModel, setSelectedImageModel] =
+    useState<string>('dall-e-3');
+  const [prompt, setPrompt] = useState<string>('');
+
+  // Load values from localStorage on mount
+  useEffect(() => {
+    const savedImageModel = localStorage.getItem(STORAGE_KEYS.IMAGE_MODEL);
+    const savedPrompt = localStorage.getItem(STORAGE_KEYS.DESIGN_PROMPT);
+
+    if (savedImageModel) {
+      setSelectedImageModel(savedImageModel);
+    }
+    if (savedPrompt) {
+      setPrompt(savedPrompt);
+    }
+  }, []);
+
+  // Save selectedImageModel to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.IMAGE_MODEL, selectedImageModel);
+  }, [selectedImageModel]);
+
+  // Save prompt to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.DESIGN_PROMPT, prompt);
+  }, [prompt]);
+
+  // Load and update background image asynchronously
+  useEffect(() => {
+    const loadBackgroundImage = async () => {
+      try {
+        const imageUrl = await getBackgroundImage();
+        setBackgroundImageUrl(imageUrl);
+      } catch (error) {
+        console.error('Failed to load background image:', error);
+      }
+    };
+
+    loadBackgroundImage();
+  }, [getBackgroundImage, WorkingTheme.backgroundImage]); // Also depend on WorkingTheme background image changes
 
   const handleGenerateImage = async () => {
     if (!isOpenAIInitialized()) {
@@ -65,7 +102,7 @@ export function BackgroundImageEditor() {
       );
 
       if (imageUrl) {
-        setBackgroundImage(imageUrl);
+        await setBackgroundImage(imageUrl);
       } else {
         toast.error('Failed to generate image');
       }
@@ -77,8 +114,8 @@ export function BackgroundImageEditor() {
     }
   };
 
-  const handleClearBackgroundImage = () => {
-    setBackgroundImage(null);
+  const handleClearBackgroundImage = async () => {
+    await setBackgroundImage(null);
     const fileInput = document.getElementById(
       'background-image-upload',
     ) as HTMLInputElement;
@@ -90,12 +127,8 @@ export function BackgroundImageEditor() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setBackgroundImage(result);
-      };
-      reader.readAsDataURL(file);
+      // Pass the File object directly - no need to convert to data URI
+      setBackgroundImage(file);
     }
     event.target.value = '';
   };
@@ -109,7 +142,7 @@ export function BackgroundImageEditor() {
     try {
       // Validate URL format
       new URL(imageUrl);
-      setBackgroundImage(imageUrl);
+      await setBackgroundImage(imageUrl);
       setImageUrl(''); // Clear the input
     } catch (error) {
       console.error('Invalid URL:', error);

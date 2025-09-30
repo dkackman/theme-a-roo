@@ -7,6 +7,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
+import { IMAGE_STORAGE_KEYS } from '@/lib/constants';
+import { imageStorage } from '@/lib/imageStorage';
 import { isTauriEnvironment, makeValidFileName } from '@/lib/utils';
 import html2canvas from 'html2canvas-pro';
 import { Download, Upload, X } from 'lucide-react';
@@ -14,44 +16,99 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { applyThemeIsolated, useTheme } from 'theme-o-rama';
 
-export default function NftImagesForm() {
+interface NftImagesFormProps {
+  onNftIconChange: (hasIcon: boolean) => void;
+}
+
+export default function NftImagesForm({ onNftIconChange }: NftImagesFormProps) {
   const { currentTheme } = useTheme();
   const { getBackgroundImage } = useWorkingThemeState();
   const previewRef = useRef<HTMLDivElement>(null);
   const [nftIcon, setNftIcon] = useState<string | null>(null);
+  const [isIntentionallyDeleting, setIsIntentionallyDeleting] = useState(false);
+
+  // Validation function to check if NFT icon is present
+  const isNftIconValid = () => {
+    return nftIcon !== null && nftIcon.trim() !== '';
+  };
+
+  // Use setNftIcon with deletion tracking
+  const setNftIconWithLogging = (value: string | null) => {
+    if (value === null) {
+      setIsIntentionallyDeleting(true);
+    }
+    setNftIcon(value);
+  };
   const [collectionBanner, setCollectionBanner] = useState<string | null>(null);
-  const backgroundImage = getBackgroundImage();
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
 
-  // Load saved images from localStorage
+  // Load saved images from IndexedDB
   useEffect(() => {
-    const savedNftIcon = localStorage.getItem('nft-icon');
-    const savedBanner = localStorage.getItem('nft-banner');
+    const loadImages = async () => {
+      try {
+        // Load background image
+        const bgImage = await getBackgroundImage();
+        setBackgroundImage(bgImage);
 
-    if (savedNftIcon) {
-      setNftIcon(savedNftIcon);
-    }
-    if (savedBanner) {
-      setCollectionBanner(savedBanner);
-    }
-  }, []);
+        // Load NFT icon
+        const nftIconUrl = await imageStorage.getImageUrl(
+          IMAGE_STORAGE_KEYS.NFT_ICON_IMAGE,
+        );
+        if (nftIconUrl) {
+          setNftIcon(nftIconUrl);
+        }
 
-  // Save images to localStorage whenever they change
+        // Load collection banner
+        const bannerUrl = await imageStorage.getImageUrl(
+          IMAGE_STORAGE_KEYS.NFT_BANNER_IMAGE,
+        );
+        if (bannerUrl) {
+          setCollectionBanner(bannerUrl);
+        }
+      } catch (error) {
+        console.error('Failed to load images from IndexedDB:', error);
+      }
+    };
+
+    loadImages();
+  }, [getBackgroundImage]);
+
+  // Save images to IndexedDB whenever they change
   useEffect(() => {
-    if (nftIcon) {
-      localStorage.setItem('nft-icon', nftIcon);
-    } else {
-      localStorage.removeItem('nft-icon');
-    }
-  }, [nftIcon]);
+    const saveNftIcon = async () => {
+      if (nftIcon) {
+        try {
+          await imageStorage.storeImage(
+            IMAGE_STORAGE_KEYS.NFT_ICON_IMAGE,
+            nftIcon,
+          );
+          // Notify parent component that NFT icon is present
+          onNftIconChange(true);
+          // Reset the deletion flag after successful save
+          setIsIntentionallyDeleting(false);
+        } catch (error) {
+          console.error('Failed to save NFT icon to IndexedDB:', error);
+        }
+      } else if (isIntentionallyDeleting) {
+        // Only delete if this is an intentional deletion (red X button)
+        try {
+          await imageStorage.deleteImage(IMAGE_STORAGE_KEYS.NFT_ICON_IMAGE);
+          // Notify parent component that NFT icon is removed
+          onNftIconChange(false);
+          // Reset the deletion flag after successful deletion
+          setIsIntentionallyDeleting(false);
+        } catch (error) {
+          console.error('Failed to delete NFT icon from IndexedDB:', error);
+        }
+      }
+    };
 
-  useEffect(() => {
-    if (collectionBanner) {
-      localStorage.setItem('nft-banner', collectionBanner);
-    } else {
-      localStorage.removeItem('nft-banner');
-    }
-  }, [collectionBanner]);
+    saveNftIcon();
+  }, [nftIcon, isIntentionallyDeleting, onNftIconChange]);
 
+  // Note: Banner storage is now handled directly in handleImageUpload.
+  // Banner image deletion is handled in handleImageUpload, without a separate useEffect for deletion tracking.
+  // If future requirements need explicit deletion tracking (like NFT icon), consider adding a useEffect.
   useEffect(() => {
     if (previewRef.current && currentTheme) {
       // Apply the theme with complete isolation from ambient theme
@@ -59,21 +116,40 @@ export default function NftImagesForm() {
     }
   }, [currentTheme]);
 
-  const handleImageUpload = (file: File, setter: (url: string) => void) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        setter(result);
-        toast.success('Image uploaded successfully');
+  const handleImageUpload = async (
+    file: File | null,
+    setter: (url: string | null) => void,
+    isNftIcon = false,
+  ) => {
+    try {
+      const id = isNftIcon
+        ? IMAGE_STORAGE_KEYS.NFT_ICON_IMAGE
+        : IMAGE_STORAGE_KEYS.NFT_BANNER_IMAGE;
+
+      if (file) {
+        // Store the file directly in IndexedDB and get blob URL
+        await imageStorage.storeImage(id, file);
+        const blobUrl = await imageStorage.getImageUrl(id);
+        if (blobUrl) {
+          setter(blobUrl);
+          toast.success('Image uploaded successfully');
+        }
+      } else {
+        // Handle deletion
+        await imageStorage.deleteImage(id);
+        setter(null);
+        toast.success('Image removed successfully');
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Failed to upload/delete image:', error);
+      toast.error('Failed to upload/delete image');
+    }
   };
 
   const handleFileSelect = (
     event: React.ChangeEvent<HTMLInputElement>,
-    setter: (url: string) => void,
+    setter: (url: string | null) => void,
+    isNftIcon = false,
   ) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -81,7 +157,7 @@ export default function NftImagesForm() {
         toast.error('Please select an image file');
         return;
       }
-      handleImageUpload(file, setter);
+      handleImageUpload(file, setter, isNftIcon);
     }
   };
 
@@ -176,6 +252,27 @@ export default function NftImagesForm() {
 
   return (
     <div className='max-w-4xl mx-auto'>
+      {/* Validation Status */}
+      <div className='mb-6 p-4 rounded-lg border'>
+        <div className='flex items-center gap-2'>
+          {isNftIconValid() ? (
+            <>
+              <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+              <span className='text-sm font-medium text-green-700'>
+                NFT Icon: Ready
+              </span>
+            </>
+          ) : (
+            <>
+              <div className='w-2 h-2 bg-red-500 rounded-full'></div>
+              <span className='text-sm font-medium text-red-700'>
+                NFT Icon: Required
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
         {/* Left Column - NFT Icon */}
         <div className='space-y-4'>
@@ -304,8 +401,20 @@ export default function NftImagesForm() {
           <Card>
             <CardHeader>
               <CardTitle className='text-base'>
-                Upload Custom NFT Icon
+                Upload Custom NFT Icon *
               </CardTitle>
+              <CardDescription className='text-sm text-muted-foreground'>
+                {!nftIcon && (
+                  <span className='text-destructive font-medium'>
+                    NFT icon is required to proceed
+                  </span>
+                )}
+                {nftIcon && (
+                  <span className='text-green-600 font-medium'>
+                    ✓ NFT icon uploaded successfully
+                  </span>
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {nftIcon ? (
@@ -320,25 +429,30 @@ export default function NftImagesForm() {
                   <Button
                     variant='destructive'
                     size='sm'
-                    onClick={() => setNftIcon(null)}
+                    onClick={() => setNftIconWithLogging(null)}
                     className='absolute -top-2 -right-2 h-6 w-6 rounded-full p-0'
                   >
                     <X className='h-3 w-3' />
                   </Button>
                 </div>
               ) : (
-                <div className='border-2 border-dashed border-border rounded-lg p-6 text-center'>
+                <div className='border-2 border-dashed border-destructive rounded-lg p-6 text-center bg-destructive/5'>
                   <input
                     type='file'
                     accept='image/*'
-                    onChange={(e) => handleFileSelect(e, setNftIcon)}
+                    onChange={(e) =>
+                      handleFileSelect(e, setNftIconWithLogging, true)
+                    }
                     className='hidden'
                     id='nft-icon-upload'
                   />
                   <label htmlFor='nft-icon-upload' className='cursor-pointer'>
-                    <Upload className='w-8 h-8 mx-auto mb-2 text-muted-foreground' />
-                    <div className='text-sm text-muted-foreground'>
-                      Click to upload NFT icon
+                    <Upload className='w-8 h-8 mx-auto mb-2 text-destructive' />
+                    <div className='text-sm text-destructive font-medium'>
+                      Click to upload NFT icon (Required)
+                    </div>
+                    <div className='text-xs text-muted-foreground mt-1'>
+                      Icon should be 320x320px
                     </div>
                   </label>
                 </div>
@@ -373,7 +487,9 @@ export default function NftImagesForm() {
                   <Button
                     variant='destructive'
                     size='sm'
-                    onClick={() => setCollectionBanner(null)}
+                    onClick={() =>
+                      handleImageUpload(null, setCollectionBanner, false)
+                    }
                     className='absolute -top-2 -right-2 h-6 w-6 rounded-full p-0'
                   >
                     <X className='h-3 w-3' />
@@ -384,7 +500,9 @@ export default function NftImagesForm() {
                   <input
                     type='file'
                     accept='image/*'
-                    onChange={(e) => handleFileSelect(e, setCollectionBanner)}
+                    onChange={(e) =>
+                      handleFileSelect(e, setCollectionBanner, false)
+                    }
                     className='hidden'
                     id='banner-upload'
                   />
