@@ -127,7 +127,7 @@ class ImageStorageService {
       return null;
     }
 
-    // Create object URL from blob (after migration, all data should be blobs)
+    // Create object URL from blob
     return URL.createObjectURL(storedImage.data);
   }
 
