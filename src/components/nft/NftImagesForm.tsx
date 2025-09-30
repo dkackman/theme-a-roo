@@ -51,19 +51,19 @@ export default function NftImagesForm({ onNftIconChange }: NftImagesFormProps) {
         setBackgroundImage(bgImage);
 
         // Load NFT icon
-        const nftIconData = await imageStorage.getImage(
+        const nftIconUrl = await imageStorage.getImageUrl(
           IMAGE_STORAGE_KEYS.NFT_ICON_IMAGE,
         );
-        if (nftIconData) {
-          setNftIcon(nftIconData.data);
+        if (nftIconUrl) {
+          setNftIcon(nftIconUrl);
         }
 
         // Load collection banner
-        const bannerData = await imageStorage.getImage(
+        const bannerUrl = await imageStorage.getImageUrl(
           IMAGE_STORAGE_KEYS.NFT_BANNER_IMAGE,
         );
-        if (bannerData) {
-          setCollectionBanner(bannerData.data);
+        if (bannerUrl) {
+          setCollectionBanner(bannerUrl);
         }
       } catch (error) {
         console.error('Failed to load images from IndexedDB:', error);

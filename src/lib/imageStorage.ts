@@ -5,11 +5,11 @@
 
 export interface StoredImage {
   id: string;
-  data: string; // base64 data URI
+  data: Blob;
 }
 
 class ImageStorageService {
-  private dbName = 'theme-a-roo-images';
+  private dbName = 'theme-a-roo-image-blobs';
   private dbVersion = 1;
   private storeName = 'images';
   private db: IDBDatabase | null = null;
@@ -49,31 +49,60 @@ class ImageStorageService {
     return this.db;
   }
 
-  async storeImage(id: string, data: string): Promise<void> {
+  async storeImage(id: string, data: string | File | Blob): Promise<void> {
     const db = await this.ensureDB();
 
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.storeName], 'readwrite');
-      const store = transaction.objectStore(this.storeName);
+    try {
+      // Convert various input types to Blob
+      let blob: Blob;
+      if (typeof data === 'string') {
+        if (data.startsWith('data:')) {
+          try {
+            // Convert data URI to Blob using a more robust method
+            blob = await this.dataUriToBlob(data);
+          } catch (error) {
+            console.error('Failed to convert data URI to blob:', error);
+            throw new Error(
+              `Failed to convert data URI to blob: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            );
+          }
+        } else if (data.startsWith('blob:')) {
+          const response = await fetch(data);
+          blob = await response.blob();
+        } else {
+          throw new Error('Unsupported data format');
+        }
+      } else {
+        // data is File or Blob
+        blob = data;
+      }
 
-      const imageData: StoredImage = {
-        id,
-        data,
-      };
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
 
-      const request = store.put(imageData);
+        const imageData: StoredImage = {
+          id,
+          data: blob,
+        };
 
-      request.onsuccess = () => resolve();
-      request.onerror = (event) => {
-        console.error('❌ IndexedDB put operation failed:', event);
-        console.error('❌ Request error:', request.error);
-        reject(
-          new Error(
-            `Failed to store image: ${request.error?.message || 'Unknown error'}`,
-          ),
-        );
-      };
-    });
+        const request = store.put(imageData);
+
+        request.onsuccess = () => resolve();
+        request.onerror = (event) => {
+          console.error('IndexedDB put operation failed:', event);
+          console.error('Request error:', request.error);
+          reject(
+            new Error(
+              `Failed to store image: ${request.error?.message || 'Unknown error'}`,
+            ),
+          );
+        };
+      });
+    } catch (error) {
+      console.error('Failed to convert data to blob:', error);
+      throw error;
+    }
   }
 
   async getImage(id: string): Promise<StoredImage | null> {
@@ -90,6 +119,16 @@ class ImageStorageService {
       };
       request.onerror = () => reject(new Error('Failed to retrieve image'));
     });
+  }
+
+  async getImageUrl(id: string): Promise<string | null> {
+    const storedImage = await this.getImage(id);
+    if (!storedImage) {
+      return null;
+    }
+
+    // Create object URL from blob (after migration, all data should be blobs)
+    return URL.createObjectURL(storedImage.data);
   }
 
   async deleteImage(id: string): Promise<void> {
@@ -135,6 +174,49 @@ class ImageStorageService {
       request.onsuccess = () => resolve();
       request.onerror = () => reject(new Error('Failed to clear all images'));
     });
+  }
+
+  /**
+   * Convert data URI to Blob using a more robust method that handles large URIs
+   */
+  private async dataUriToBlob(dataUri: string): Promise<Blob> {
+    try {
+      // Try the standard fetch approach first (works for most cases)
+      const response = await fetch(dataUri);
+      return await response.blob();
+    } catch (error) {
+      try {
+        const [header, base64Data] = dataUri.split(',');
+        if (!header || !base64Data) {
+          throw new Error('Invalid data URI format');
+        }
+
+        // Extract MIME type
+        const mimeMatch = header.match(/data:([^;]+)/);
+        const mimeType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+
+        // Convert base64 to binary
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        return new Blob([bytes], { type: mimeType });
+      } catch (manualError) {
+        console.error('Manual conversion also failed:', manualError);
+        throw new Error(
+          `Both fetch and manual conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
+    }
+  }
+
+  revokeImageUrl(url: string): void {
+    if (url.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
   }
 }
 

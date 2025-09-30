@@ -127,12 +127,8 @@ export function BackgroundImageEditor() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const result = e.target?.result as string;
-        await setBackgroundImage(result);
-      };
-      reader.readAsDataURL(file);
+      // Pass the File object directly - no need to convert to data URI
+      setBackgroundImage(file);
     }
     event.target.value = '';
   };

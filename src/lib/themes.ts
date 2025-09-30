@@ -1,6 +1,4 @@
 import { Theme, validateTheme } from 'theme-o-rama';
-import { IMAGE_STORAGE_KEYS } from './constants';
-import { imageStorage } from './imageStorage';
 
 export function hasTag(theme: Theme, tag: string): boolean {
   return theme.tags?.includes(tag) === true;
@@ -59,20 +57,9 @@ export async function resolveThemeImage(
   themeName: string,
   imagePath: string,
 ): Promise<string> {
-  // Check for sentinel value to return uploaded background image
-  if (imagePath === '{INDEXED_DB}') {
-    try {
-      const storedImage = await imageStorage.getImage(
-        IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
-      );
-      return storedImage?.data ?? '';
-    } catch (error) {
-      console.error(
-        'Failed to retrieve background image from IndexedDB:',
-        error,
-      );
-      return '';
-    }
+  // If it's already a blob: URL, return it directly
+  if (imagePath.startsWith('blob:')) {
+    return imagePath;
   }
 
   // Use static glob import to avoid dynamic import warnings for local files

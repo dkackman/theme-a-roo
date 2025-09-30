@@ -20,7 +20,6 @@ export function BackdropFilters() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        console.log('Loading backdrop filters data...');
 
         // Check backdrop filters synchronously from WorkingTheme
         const hasBackdropFilters = Boolean(
@@ -34,9 +33,6 @@ export function BackdropFilters() {
         );
 
         const backgroundImageResult = await getBackgroundImage();
-
-        console.log('Backdrop filters result:', hasBackdropFilters);
-        console.log('Background image result:', backgroundImageResult);
 
         setBackdropFilters(hasBackdropFilters);
         setBackgroundImage(backgroundImageResult);
