@@ -225,7 +225,7 @@ class ImageStorageService {
 
   // Cleanup all active blob URLs (useful for app shutdown)
   revokeAllActiveUrls(): void {
-    this.activeBlobUrls.forEach(url => {
+    this.activeBlobUrls.forEach((url) => {
       URL.revokeObjectURL(url);
     });
     this.activeBlobUrls.clear();

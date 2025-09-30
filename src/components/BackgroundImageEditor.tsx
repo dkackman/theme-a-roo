@@ -81,7 +81,11 @@ export function BackgroundImageEditor() {
     };
 
     loadBackgroundImage();
-  }, [WorkingTheme.backgroundImage]); // Only depend on WorkingTheme background image changes
+  }, [
+    WorkingTheme.backgroundImage,
+    getBackgroundImage,
+    refreshBackgroundImageUrl,
+  ]); // Only depend on WorkingTheme background image changes
 
   // Note: We don't cleanup blob URLs on component unmount because they're
   // persisted in the Zustand store and should survive navigation.

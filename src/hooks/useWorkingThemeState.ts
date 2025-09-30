@@ -102,7 +102,10 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
       clearWorkingTheme: async () => {
         // Revoke blob URL before clearing
         const currentBackgroundImage = get().WorkingTheme.backgroundImage;
-        if (currentBackgroundImage && currentBackgroundImage.startsWith('blob:')) {
+        if (
+          currentBackgroundImage &&
+          currentBackgroundImage.startsWith('blob:')
+        ) {
           imageStorage.revokeImageUrl(currentBackgroundImage);
         }
 
@@ -178,9 +181,11 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
             );
 
             // Only revoke the old URL if we're actually replacing it with a new one
-            if (currentBackgroundImage &&
+            if (
+              currentBackgroundImage &&
               currentBackgroundImage.startsWith('blob:') &&
-              currentBackgroundImage !== blobUrl) {
+              currentBackgroundImage !== blobUrl
+            ) {
               imageStorage.revokeImageUrl(currentBackgroundImage);
             }
 
@@ -206,7 +211,10 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
           }
         } else if (url === null) {
           // Only revoke URL when explicitly deleting the image
-          if (currentBackgroundImage && currentBackgroundImage.startsWith('blob:')) {
+          if (
+            currentBackgroundImage &&
+            currentBackgroundImage.startsWith('blob:')
+          ) {
             imageStorage.revokeImageUrl(currentBackgroundImage);
           }
 
@@ -214,7 +222,10 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
           try {
             await imageStorage.deleteImage(IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE);
           } catch (error) {
-            console.error('Failed to delete background image from IndexedDB:', error);
+            console.error(
+              'Failed to delete background image from IndexedDB:',
+              error,
+            );
           }
 
           set((state) => ({
@@ -296,8 +307,8 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         const theme = get().WorkingTheme;
         return Boolean(
           theme.colors?.cardBackdropFilter ||
-          theme.colors?.popoverBackdropFilter ||
-          theme.colors?.inputBackdropFilter,
+            theme.colors?.popoverBackdropFilter ||
+            theme.colors?.inputBackdropFilter,
         );
       },
       refreshBlobUrls: async () => {
@@ -310,7 +321,9 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         if (backgroundImage && backgroundImage.startsWith('blob:')) {
           try {
             // Check if the image still exists in IndexedDB
-            const storedImage = await imageStorage.getImage(IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE);
+            const storedImage = await imageStorage.getImage(
+              IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
+            );
 
             if (!storedImage) {
               // Image was deleted from IndexedDB, clear it from store
@@ -362,14 +375,14 @@ export const useWorkingThemeState = () => {
     const hasBackdropFilters = Boolean(
       // Colors backdrop filters
       initializedTheme.colors?.cardBackdropFilter ||
-      initializedTheme.colors?.popoverBackdropFilter ||
-      initializedTheme.colors?.inputBackdropFilter ||
-      // Sidebar backdrop filter
-      initializedTheme.sidebar?.backdropFilter ||
-      // Table backdrop filters
-      initializedTheme.tables?.header?.backdropFilter ||
-      initializedTheme.tables?.row?.backdropFilter ||
-      initializedTheme.tables?.footer?.backdropFilter,
+        initializedTheme.colors?.popoverBackdropFilter ||
+        initializedTheme.colors?.inputBackdropFilter ||
+        // Sidebar backdrop filter
+        initializedTheme.sidebar?.backdropFilter ||
+        // Table backdrop filters
+        initializedTheme.tables?.header?.backdropFilter ||
+        initializedTheme.tables?.row?.backdropFilter ||
+        initializedTheme.tables?.footer?.backdropFilter,
     );
 
     return hasBackdropFilters;
