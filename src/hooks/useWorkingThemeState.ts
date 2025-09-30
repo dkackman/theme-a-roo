@@ -37,7 +37,7 @@ async function refreshBlobUrls(state: WorkingThemeState) {
 
     // Check if we have an old blob URL
     if (backgroundImage && backgroundImage.startsWith('blob:')) {
-      // DON'T revoke the old URL - just get a fresh one and update if different
+      // Don't revoke the old URL - just get a fresh one and update if different
       const freshBlobUrl = await imageStorage.getImageUrl(
         IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
       );
