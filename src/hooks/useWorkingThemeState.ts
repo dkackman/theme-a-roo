@@ -25,6 +25,7 @@ interface WorkingThemeState {
   setBackdropFilters: (enabled: boolean) => void;
   getBackdropFilters: () => boolean;
   refreshBlobUrls: () => Promise<void>;
+  refreshBackgroundImageUrl: () => Promise<void>;
 }
 
 export const DESIGN_THEME_NAME = 'theme-a-roo-custom-theme';
@@ -36,24 +37,26 @@ async function refreshBlobUrls(state: WorkingThemeState) {
 
     // Check if we have an old blob URL
     if (backgroundImage && backgroundImage.startsWith('blob:')) {
-      // Get fresh blob URL from IndexedDB
+      // Don't revoke the old URL - just get a fresh one and update if different
       const freshBlobUrl = await imageStorage.getImageUrl(
         IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
       );
 
-      if (freshBlobUrl) {
-        // Update the theme with the fresh blob URL
+      if (freshBlobUrl && freshBlobUrl !== backgroundImage) {
+        // Only update if we got a different URL
         state.setTheme({
           ...state.WorkingTheme,
           backgroundImage: freshBlobUrl,
         });
-      } else {
-        // Clear the invalid blob URL
+      }
+      
+      else if (!freshBlobUrl) {
         state.setTheme({
           ...state.WorkingTheme,
           backgroundImage: undefined,
         });
       }
+      // If URLs are the same, no update needed
     }
   } catch (error) {
     console.error('Failed to refresh blob URLs:', error);
@@ -97,6 +100,15 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
       setMostLike: (mostLike: MostLikeType) =>
         set((state) => ({ WorkingTheme: { ...state.WorkingTheme, mostLike } })),
       clearWorkingTheme: async () => {
+        // Revoke blob URL before clearing
+        const currentBackgroundImage = get().WorkingTheme.backgroundImage;
+        if (
+          currentBackgroundImage &&
+          currentBackgroundImage.startsWith('blob:')
+        ) {
+          imageStorage.revokeImageUrl(currentBackgroundImage);
+        }
+
         // Clear IndexedDB background image
         try {
           await imageStorage.deleteImage(IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE);
@@ -152,6 +164,8 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         return rgb || { r: 220, g: 30, b: 15 };
       },
       setBackgroundImage: async (url: string | File | null) => {
+        const currentBackgroundImage = get().WorkingTheme.backgroundImage;
+
         if (
           url &&
           (url instanceof File ||
@@ -165,6 +179,16 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
             const blobUrl = await imageStorage.getImageUrl(
               IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
             );
+
+            // Only revoke the old URL if we're actually replacing it with a new one
+            if (
+              currentBackgroundImage &&
+              currentBackgroundImage.startsWith('blob:') &&
+              currentBackgroundImage !== blobUrl
+            ) {
+              imageStorage.revokeImageUrl(currentBackgroundImage);
+            }
+
             set((state) => ({
               WorkingTheme: {
                 ...state.WorkingTheme,
@@ -185,7 +209,37 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
               `Failed to store background image: ${error instanceof Error ? error.message : 'Unknown error'}`,
             );
           }
+        } else if (url === null) {
+          // Only revoke URL when explicitly deleting the image
+          if (
+            currentBackgroundImage &&
+            currentBackgroundImage.startsWith('blob:')
+          ) {
+            imageStorage.revokeImageUrl(currentBackgroundImage);
+          }
+
+          // Delete from IndexedDB
+          try {
+            await imageStorage.deleteImage(IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE);
+          } catch (error) {
+            console.error(
+              'Failed to delete background image from IndexedDB:',
+              error,
+            );
+          }
+
+          set((state) => ({
+            WorkingTheme: {
+              ...state.WorkingTheme,
+              backgroundImage: undefined,
+              colors: {
+                ...state.WorkingTheme.colors,
+                background: undefined,
+              },
+            },
+          }));
         } else {
+          // Setting a non-blob URL (like http/https)
           set((state) => ({
             WorkingTheme: {
               ...state.WorkingTheme,
@@ -259,6 +313,32 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
       },
       refreshBlobUrls: async () => {
         await refreshBlobUrls(get());
+      },
+      refreshBackgroundImageUrl: async () => {
+        const backgroundImage = get().WorkingTheme.backgroundImage;
+
+        // Only refresh if we have a blob URL that might be stale
+        if (backgroundImage && backgroundImage.startsWith('blob:')) {
+          try {
+            // Check if the image still exists in IndexedDB
+            const storedImage = await imageStorage.getImage(
+              IMAGE_STORAGE_KEYS.BACKGROUND_IMAGE,
+            );
+
+            if (!storedImage) {
+              // Image was deleted from IndexedDB, clear it from store
+              set((state) => ({
+                WorkingTheme: {
+                  ...state.WorkingTheme,
+                  backgroundImage: undefined,
+                },
+              }));
+            }
+            // If image exists, keep using the existing blob URL - no need to create a new one
+          } catch (error) {
+            console.error('Failed to refresh background image URL:', error);
+          }
+        }
       },
     }),
     {

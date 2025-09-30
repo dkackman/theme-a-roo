@@ -116,6 +116,10 @@ export default function NftImagesForm({ onNftIconChange }: NftImagesFormProps) {
     }
   }, [currentTheme]);
 
+  // Note: We don't cleanup blob URLs on component unmount because they're
+  // persisted in IndexedDB and should survive navigation.
+  // URLs are only revoked when actually replaced in handleImageUpload.
+
   const handleImageUpload = async (
     file: File | null,
     setter: (url: string | null) => void,
@@ -125,6 +129,12 @@ export default function NftImagesForm({ onNftIconChange }: NftImagesFormProps) {
       const id = isNftIcon
         ? IMAGE_STORAGE_KEYS.NFT_ICON_IMAGE
         : IMAGE_STORAGE_KEYS.NFT_BANNER_IMAGE;
+
+      // Get current URL to revoke if it's a blob URL
+      const currentUrl = isNftIcon ? nftIcon : collectionBanner;
+      if (currentUrl && currentUrl.startsWith('blob:')) {
+        imageStorage.revokeImageUrl(currentUrl);
+      }
 
       if (file) {
         // Store the file directly in IndexedDB and get blob URL

@@ -13,6 +13,7 @@ class ImageStorageService {
   private dbVersion = 1;
   private storeName = 'images';
   private db: IDBDatabase | null = null;
+  private activeBlobUrls = new Set<string>();
 
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -128,7 +129,9 @@ class ImageStorageService {
     }
 
     // Create object URL from blob
-    return URL.createObjectURL(storedImage.data);
+    const blobUrl = URL.createObjectURL(storedImage.data);
+    this.activeBlobUrls.add(blobUrl);
+    return blobUrl;
   }
 
   async deleteImage(id: string): Promise<void> {
@@ -216,7 +219,21 @@ class ImageStorageService {
   revokeImageUrl(url: string): void {
     if (url.startsWith('blob:')) {
       URL.revokeObjectURL(url);
+      this.activeBlobUrls.delete(url);
     }
+  }
+
+  // Cleanup all active blob URLs (useful for app shutdown)
+  revokeAllActiveUrls(): void {
+    this.activeBlobUrls.forEach((url) => {
+      URL.revokeObjectURL(url);
+    });
+    this.activeBlobUrls.clear();
+  }
+
+  // Get count of active blob URLs (useful for debugging)
+  getActiveUrlCount(): number {
+    return this.activeBlobUrls.size;
   }
 }
 

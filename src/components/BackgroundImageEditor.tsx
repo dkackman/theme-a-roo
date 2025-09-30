@@ -25,6 +25,7 @@ export function BackgroundImageEditor() {
     getThemeColor,
     getBackgroundImage,
     setBackgroundImage,
+    refreshBackgroundImageUrl,
     WorkingTheme,
   } = useWorkingThemeState();
   const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
@@ -68,6 +69,10 @@ export function BackgroundImageEditor() {
   useEffect(() => {
     const loadBackgroundImage = async () => {
       try {
+        // First, try to refresh the blob URL if it exists
+        await refreshBackgroundImageUrl();
+
+        // Then get the current background image
         const imageUrl = await getBackgroundImage();
         setBackgroundImageUrl(imageUrl);
       } catch (error) {
@@ -76,7 +81,15 @@ export function BackgroundImageEditor() {
     };
 
     loadBackgroundImage();
-  }, [getBackgroundImage, WorkingTheme.backgroundImage]); // Also depend on WorkingTheme background image changes
+  }, [
+    WorkingTheme.backgroundImage,
+    getBackgroundImage,
+    refreshBackgroundImageUrl,
+  ]); // Only depend on WorkingTheme background image changes
+
+  // Note: We don't cleanup blob URLs on component unmount because they're
+  // persisted in the Zustand store and should survive navigation.
+  // URLs are only revoked when actually replaced in useWorkingThemeState.
 
   const handleGenerateImage = async () => {
     if (!isOpenAIInitialized()) {
