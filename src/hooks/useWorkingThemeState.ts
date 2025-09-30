@@ -48,9 +48,7 @@ async function refreshBlobUrls(state: WorkingThemeState) {
           ...state.WorkingTheme,
           backgroundImage: freshBlobUrl,
         });
-      }
-      
-      else if (!freshBlobUrl) {
+      } else if (!freshBlobUrl) {
         state.setTheme({
           ...state.WorkingTheme,
           backgroundImage: undefined,

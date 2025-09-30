@@ -15,6 +15,7 @@ import { useErrors } from '@/hooks/useErrors';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { validateThemeJson } from '@/lib/themes';
+import jsonSchema from '@/schema.json';
 import Editor from '@monaco-editor/react';
 import { Check, Info, Loader2, Upload } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -236,6 +237,18 @@ export default function JsonEditor() {
                   className={`w-full border border-gray-300 rounded ${!isWorkingThemeSelected ? 'opacity-75' : ''}`}
                 >
                   <Editor
+                    beforeMount={(monaco) => {
+                      monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                        validate: true,
+                        schemas: [
+                          {
+                            uri: 'http://myserver/my-schema.json',
+                            fileMatch: ['*'],
+                            schema: jsonSchema,
+                          },
+                        ],
+                      });
+                    }}
                     height='calc(100vh - 300px)'
                     defaultLanguage='json'
                     value={jsonEditorValue}
@@ -246,7 +259,7 @@ export default function JsonEditor() {
                     }
                     options={{
                       readOnly: !isWorkingThemeSelected,
-                      minimap: { enabled: false },
+                      minimap: { enabled: true },
                       scrollBeyondLastLine: false,
                       fontSize: 12,
                       fontFamily:
@@ -262,7 +275,7 @@ export default function JsonEditor() {
                       lineNumbers: 'on',
                       renderWhitespace: 'selection',
                       selectOnLineNumbers: true,
-                      roundedSelection: false,
+                      roundedSelection: true,
                       cursorStyle: 'line',
                       contextmenu: true,
                       mouseWheelZoom: true,
