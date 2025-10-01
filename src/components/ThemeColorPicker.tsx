@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { rgbToHsl } from '@/lib/utils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RgbColorPicker } from 'react-colorful';
 
 interface ThemeColorPickerProps {
@@ -11,13 +11,27 @@ interface ThemeColorPickerProps {
 }
 
 export function ThemeColorPicker({ className = '' }: ThemeColorPickerProps) {
-  const { getThemeColor, setThemeColor, setBackgroundColor } =
-    useWorkingThemeState();
+  const {
+    getThemeColor,
+    setThemeColor,
+    setBackgroundColor,
+    getBackgroundColor,
+    WorkingTheme,
+  } = useWorkingThemeState();
   const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
-  const [applyToBackground, setApplyToBackground] = useState(false);
+  const [applyToBackground, setApplyToBackground] = useState(
+    () => getBackgroundColor() === 'var(--theme-color)',
+  );
 
   const color = getThemeColor();
   const disabled = !isWorkingThemeSelected;
+
+  // Make checkbox reactive to background color changes
+  useEffect(() => {
+    const currentBackgroundColor = getBackgroundColor();
+    const shouldBeChecked = currentBackgroundColor === 'var(--theme-color)';
+    setApplyToBackground(shouldBeChecked);
+  }, [WorkingTheme.colors?.background, getBackgroundColor]);
 
   const handleApplyToBackgroundChange = (checked: boolean) => {
     setApplyToBackground(checked);
