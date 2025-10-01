@@ -18,6 +18,8 @@ interface WorkingThemeState {
   deriveThemeName: () => string;
   setWorkingThemeFromCurrent: (currentTheme: Theme) => void;
   setWorkingThemeFromJson: (json: string) => void;
+  setBackgroundColor: (colorExpression: string | undefined) => void;
+  getBackgroundColor: () => string | undefined;
   setThemeColor: ({ r, g, b }: { r: number; g: number; b: number }) => void;
   getThemeColor: () => { r: number; g: number; b: number };
   setBackgroundImage: (url: string | File | null) => Promise<void>;
@@ -142,6 +144,27 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
           console.error('Error parsing theme JSON:', error);
           throw new Error('Invalid theme JSON format');
         }
+      },
+      setBackgroundColor: (colorExpression: string | undefined) => {
+        if (
+          colorExpression === undefined &&
+          get().WorkingTheme.backgroundImage
+        ) {
+          colorExpression = 'transparent';
+        }
+
+        set((state) => ({
+          WorkingTheme: {
+            ...state.WorkingTheme,
+            colors: {
+              ...state.WorkingTheme.colors,
+              background: colorExpression,
+            },
+          },
+        }));
+      },
+      getBackgroundColor: () => {
+        return get().WorkingTheme.colors?.background;
       },
       setThemeColor: ({ r, g, b }: { r: number; g: number; b: number }) => {
         const hsl = rgbToHsl(r, g, b);

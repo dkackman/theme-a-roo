@@ -1,8 +1,8 @@
 import { BackdropFilters } from '@/components/BackdropFilters';
 import { BackgroundImageEditor } from '@/components/BackgroundImageEditor';
-import { ColorPicker } from '@/components/ColorPicker';
 import Header from '@/components/Header';
 import Layout from '@/components/Layout';
+import { ThemeColorPicker } from '@/components/ThemeColorPicker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Card,
@@ -51,7 +51,7 @@ export default function BackgroundEditor() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <ColorPicker />
+                      <ThemeColorPicker />
                     </CardContent>
                   </Card>
 
