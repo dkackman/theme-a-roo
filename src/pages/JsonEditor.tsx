@@ -14,11 +14,12 @@ import { Label } from '@/components/ui/label';
 import { useErrors } from '@/hooks/useErrors';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
+import { parseColor, rgbaToHex } from '@/lib/color';
 import { validateThemeJson } from '@/lib/themes';
 import jsonSchema from '@/schema.json';
 import Editor from '@monaco-editor/react';
 import { Check, Info, Loader2, Upload } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBlocker } from 'react-router-dom';
 import { useTheme } from 'theme-o-rama';
 
@@ -38,6 +39,9 @@ export default function JsonEditor() {
 
   // Unsaved changes tracking
   const [originalJsonValue, setOriginalJsonValue] = useState('');
+
+  // Monaco Editor initialization tracking
+  const monacoInitializedRef = useRef(false);
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = useCallback(() => {
@@ -238,6 +242,12 @@ export default function JsonEditor() {
                 >
                   <Editor
                     beforeMount={(monaco) => {
+                      // Only initialize Monaco once to prevent duplicate color providers
+                      if (monacoInitializedRef.current) {
+                        return;
+                      }
+                      monacoInitializedRef.current = true;
+
                       monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                         validate: true,
                         schemas: [
@@ -248,6 +258,104 @@ export default function JsonEditor() {
                           },
                         ],
                       });
+                      monaco.languages.json.jsonDefaults.setModeConfiguration({
+                        documentFormattingEdits: true,
+                        documentRangeFormattingEdits: true,
+                        completionItems: true,
+                        hovers: true,
+                        documentSymbols: true,
+                        tokens: true,
+                        colors: true, // Enable color picker
+                        foldingRanges: true,
+                        diagnostics: true,
+                        selectionRanges: true,
+                      });
+                      // Only register color provider once to prevent duplicates on navigation
+                      if (
+                        !(
+                          window as unknown as {
+                            __jsonColorProviderRegistered?: boolean;
+                          }
+                        ).__jsonColorProviderRegistered
+                      ) {
+                        monaco.languages.registerColorProvider('json', {
+                          provideDocumentColors(model) {
+                            const colors = [];
+                            const text = model.getValue();
+
+                            // Match quoted strings that could be colors (hex, rgb, rgba, hsl, hsla, or named colors)
+                            // This regex matches any quoted string, then we'll validate with parseColor
+                            const colorRegex = /"([^"]+)"/g;
+                            let match;
+
+                            while ((match = colorRegex.exec(text)) !== null) {
+                              const colorString = match[1];
+
+                              // Skip obviously non-color strings to improve performance
+                              // Only check strings that could plausibly be colors
+                              if (
+                                colorString.length > 50 ||
+                                (colorString.includes(' ') &&
+                                  !colorString.match(/^(rgb|hsl)/i)) ||
+                                colorString.includes('/') ||
+                                colorString.includes('\\')
+                              ) {
+                                continue;
+                              }
+
+                              const startPos = model.getPositionAt(
+                                match.index + 1,
+                              ); // +1 to skip opening quote
+                              const endPos = model.getPositionAt(
+                                match.index + match[1].length + 1,
+                              );
+
+                              // Use our robust parseColor function to validate and parse
+                              const color = parseColor(colorString);
+                              if (color) {
+                                colors.push({
+                                  color: color,
+                                  range: {
+                                    startLineNumber: startPos.lineNumber,
+                                    startColumn: startPos.column,
+                                    endLineNumber: endPos.lineNumber,
+                                    endColumn: endPos.column,
+                                  },
+                                });
+                              }
+                            }
+
+                            return colors;
+                          },
+                          provideColorPresentations(_, colorInfo) {
+                            const color = colorInfo.color;
+                            const hex = rgbaToHex(color);
+                            const rgb = `rgba(${Math.round(color.red * 255)}, ${Math.round(color.green * 255)}, ${Math.round(color.blue * 255)}, ${color.alpha})`;
+
+                            return [
+                              {
+                                label: hex,
+                                textEdit: {
+                                  range: colorInfo.range,
+                                  text: hex,
+                                },
+                              },
+                              {
+                                label: rgb,
+                                textEdit: {
+                                  range: colorInfo.range,
+                                  text: rgb,
+                                },
+                              },
+                            ];
+                          },
+                        });
+                        (
+                          window as unknown as {
+                            __jsonColorProviderRegistered?: boolean;
+                          }
+                        ).__jsonColorProviderRegistered = true;
+                      }
                     }}
                     height='calc(100vh - 300px)'
                     defaultLanguage='json'

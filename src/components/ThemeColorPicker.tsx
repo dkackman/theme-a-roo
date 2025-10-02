@@ -2,7 +2,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
-import { rgbToHsl } from '@/lib/utils';
+import { rgbToHsl } from '@/lib/color';
 import { useEffect, useState } from 'react';
 import { RgbColorPicker } from 'react-colorful';
 
@@ -76,7 +76,7 @@ export function ThemeColorPicker({ className = '' }: ThemeColorPickerProps) {
           </p>
           <p className='text-sm text-muted-foreground'>
             {(() => {
-              const hsl = rgbToHsl(color.r, color.g, color.b);
+              const hsl = rgbToHsl(color);
               return `HSL(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
             })()}
           </p>

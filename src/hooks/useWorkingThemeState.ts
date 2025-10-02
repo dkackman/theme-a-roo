@@ -1,6 +1,7 @@
+import { hslToRgb, RgbColor, rgbToHsl } from '@/lib/color';
 import { IMAGE_STORAGE_KEYS } from '@/lib/constants';
 import { imageStorage } from '@/lib/imageStorage';
-import { hslToRgb, makeValidFileName, rgbToHsl } from '@/lib/utils';
+import { makeValidFileName } from '@/lib/utils';
 import { Theme, useTheme } from 'theme-o-rama';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -20,7 +21,7 @@ interface WorkingThemeState {
   setWorkingThemeFromJson: (json: string) => void;
   setBackgroundColor: (colorExpression: string | undefined) => void;
   getBackgroundColor: () => string | undefined;
-  setThemeColor: ({ r, g, b }: { r: number; g: number; b: number }) => void;
+  setThemeColor: (color: RgbColor) => void;
   getThemeColor: () => { r: number; g: number; b: number };
   setBackgroundImage: (url: string | File | null) => Promise<void>;
   getBackgroundImage: () => Promise<string | null>;
@@ -166,8 +167,8 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
       getBackgroundColor: () => {
         return get().WorkingTheme.colors?.background;
       },
-      setThemeColor: ({ r, g, b }: { r: number; g: number; b: number }) => {
-        const hsl = rgbToHsl(r, g, b);
+      setThemeColor: (color: RgbColor) => {
+        const hsl = rgbToHsl(color);
         set((state) => ({
           WorkingTheme: {
             ...state.WorkingTheme,
