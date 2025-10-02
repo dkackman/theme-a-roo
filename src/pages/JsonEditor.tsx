@@ -166,6 +166,7 @@ export default function JsonEditor() {
   ]);
 
   try {
+    console.log('mostLike', currentTheme?.mostLike);
     return (
       <Layout>
         <Header title='JSON Editor' />
@@ -241,6 +242,7 @@ export default function JsonEditor() {
                   className={`w-full border border-gray-300 rounded ${!isWorkingThemeSelected ? 'opacity-75' : ''}`}
                 >
                   <Editor
+                    theme={currentTheme?.mostLike === 'dark' ? 'vs-dark' : 'vs'}
                     beforeMount={(monaco) => {
                       // Only initialize Monaco once to prevent duplicate color providers
                       if (monacoInitializedRef.current) {
@@ -280,7 +282,20 @@ export default function JsonEditor() {
                       ) {
                         monaco.languages.registerColorProvider('json', {
                           provideDocumentColors(model) {
-                            const colors = [];
+                            const colors: {
+                              color: {
+                                red: number;
+                                green: number;
+                                blue: number;
+                                alpha: number;
+                              };
+                              range: {
+                                startLineNumber: number;
+                                startColumn: number;
+                                endLineNumber: number;
+                                endColumn: number;
+                              };
+                            }[] = [];
                             const text = model.getValue();
 
                             // Match quoted strings that could be colors (hex, rgb, rgba, hsl, hsla, or named colors)
@@ -388,8 +403,6 @@ export default function JsonEditor() {
                       contextmenu: true,
                       mouseWheelZoom: true,
                       smoothScrolling: true,
-                      theme:
-                        currentTheme?.mostLike === 'dark' ? 'vs-dark' : 'vs',
                     }}
                     loading={
                       <div className='flex items-center justify-center h-32'>

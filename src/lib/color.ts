@@ -104,14 +104,6 @@ export function hslToRgb(themeColor: string): RgbColor | null {
   };
 }
 
-export function areColorsEqual(color1: RgbColor, color2: RgbColor): boolean {
-  return (
-    Math.abs(color1.r - color2.r) <= 1 &&
-    Math.abs(color1.g - color2.g) <= 1 &&
-    Math.abs(color1.b - color2.b) <= 1
-  );
-}
-
 export function rgbToHsl(
   rOrColor: number | RgbColor,
   g?: number,
