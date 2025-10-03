@@ -38,14 +38,6 @@ export async function discoverThemes(): Promise<Theme[]> {
       })
       .filter((theme): theme is Theme => theme !== null);
 
-    // Add the working theme as a discoverable theme
-    const workingThemeState = JSON.parse(
-      localStorage.getItem('working-theme-storage') || '{}',
-    );
-    if (workingThemeState?.state?.WorkingTheme) {
-      themeContents.push(workingThemeState.state.WorkingTheme);
-    }
-
     return themeContents;
   } catch (error) {
     console.warn('Could not discover theme folders:', error);

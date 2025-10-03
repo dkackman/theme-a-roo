@@ -25,8 +25,7 @@ import { useEffect, useState } from 'react';
 import { Theme, useTheme } from 'theme-o-rama';
 
 export default function Themes() {
-  const { currentTheme, setTheme, reloadThemes, availableThemes, isLoading } =
-    useTheme();
+  const { currentTheme, setCustomTheme, isLoading } = useTheme();
   const { getInitializedWorkingTheme, WorkingTheme } = useWorkingThemeState();
   const { isWorkingThemeSelected, setManuallyApplying } =
     useWorkingThemeAutoApply();
@@ -76,17 +75,8 @@ export default function Themes() {
       const theme = await getInitializedWorkingTheme();
       const workingThemeJson = JSON.stringify(theme);
       if (workingThemeJson && workingThemeJson.trim()) {
-        // Check if working theme is already discoverable
-        const isWorkingThemeDiscoverable = availableThemes.some(
-          (t) => t.name === theme.name,
-        );
-
-        if (!isWorkingThemeDiscoverable) {
-          await reloadThemes();
-        }
-
-        // Apply the working theme
-        setTheme(theme.name);
+        // Apply the working theme using setCustomTheme
+        await setCustomTheme(workingThemeJson);
       }
     } catch (error) {
       console.error('Failed to apply working theme:', error);
