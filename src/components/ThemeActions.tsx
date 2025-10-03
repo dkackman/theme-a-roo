@@ -41,7 +41,7 @@ const needsBackgroundImageUpload = (backgroundImage: string): boolean => {
 
 export function ThemeActions() {
   const { addError } = useErrors();
-  const { currentTheme, setCustomTheme } = useTheme();
+  const { setCustomTheme } = useTheme();
   const navigate = useNavigate();
   const {
     WorkingTheme,
@@ -50,14 +50,12 @@ export function ThemeActions() {
     setMostLike,
     clearWorkingTheme,
     deriveThemeName,
-    setWorkingThemeFromCurrent,
     setWorkingThemeFromJson,
     getInitializedWorkingTheme,
   } = useWorkingThemeState();
   const [isTauri, setIsTauri] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showStartWithConfirm, setShowStartWithConfirm] = useState(false);
   const [showOpenConfirm, setShowOpenConfirm] = useState(false);
   const [showBackgroundImageWarning, setShowBackgroundImageWarning] =
     useState(false);
@@ -105,26 +103,6 @@ export function ThemeActions() {
     }
     setShowResetConfirm(false);
   }, [clearWorkingTheme, getInitializedWorkingTheme, setCustomTheme]);
-
-  const handleStartWithThisTheme = useCallback(async () => {
-    if (currentTheme) {
-      setWorkingThemeFromCurrent(currentTheme);
-      // Apply the working theme to ensure it becomes selected
-      try {
-        const initializedTheme = await getInitializedWorkingTheme();
-        const workingThemeJson = JSON.stringify(initializedTheme);
-        await setCustomTheme(workingThemeJson);
-      } catch (error) {
-        console.error('Failed to apply start with theme:', error);
-      }
-    }
-    setShowStartWithConfirm(false);
-  }, [
-    currentTheme,
-    setWorkingThemeFromCurrent,
-    getInitializedWorkingTheme,
-    setCustomTheme,
-  ]);
 
   const handleSave = useCallback(async () => {
     if (!WorkingTheme.displayName?.trim()) {
@@ -255,22 +233,12 @@ export function ThemeActions() {
           <span className='text-sm'>Open Theme</span>
         </Button>
         <Button
-          onClick={
-            isWorkingThemeSelected
-              ? () => setShowResetConfirm(true)
-              : () => setShowStartWithConfirm(true)
-          }
+          onClick={() => setShowResetConfirm(true)}
           variant='outline'
-          className={`flex flex-col items-center gap-2 h-auto py-4 ${
-            isWorkingThemeSelected
-              ? 'text-destructive hover:text-destructive'
-              : 'text-primary hover:text-primary'
-          }`}
+          className='flex flex-col items-center gap-2 h-auto py-4 text-destructive hover:text-destructive'
         >
           <RotateCcw className='h-5 w-5' />
-          <span className='text-sm'>
-            {isWorkingThemeSelected ? 'Reset' : 'Start with this theme'}
-          </span>
+          <span className='text-sm'>Reset</span>
         </Button>
         <Button
           onClick={handleSave}
@@ -288,7 +256,7 @@ export function ThemeActions() {
               <span className='text-sm'>Save Theme as...</span>
             </>
           )}
-        </Button>{' '}
+        </Button>
         {isTauri && (
           <Button
             onClick={handlePrepareNft}
@@ -414,15 +382,6 @@ export function ThemeActions() {
         confirmText='Reset Theme'
         onConfirm={handleClearTheme}
         onCancel={() => setShowResetConfirm(false)}
-      />
-      <ReplaceWorkingThemeWarning
-        open={showStartWithConfirm}
-        onOpenChange={setShowStartWithConfirm}
-        title='Start with This Theme'
-        description={`This will replace your current working theme with [${currentTheme?.displayName}]. All your current theme customizations will be lost. Are you sure you want to continue?`}
-        confirmText='Start with This Theme'
-        onConfirm={handleStartWithThisTheme}
-        onCancel={() => setShowStartWithConfirm(false)}
       />
       <ReplaceWorkingThemeWarning
         open={showOpenConfirm}
