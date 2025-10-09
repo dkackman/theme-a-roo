@@ -7,8 +7,13 @@ import '@fontsource/roboto/700.css';
 
 import './setup.ts';
 
+import { StrictMode } from 'react';
 import App from './App.tsx';
 
 const element = document.getElementById('root') as HTMLElement;
 
-createRoot(element).render(<App />);
+createRoot(element).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);

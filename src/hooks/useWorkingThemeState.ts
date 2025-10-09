@@ -2,6 +2,7 @@ import { hslToRgb, RgbColor, rgbToHsl } from '@/lib/color';
 import { IMAGE_STORAGE_KEYS } from '@/lib/constants';
 import { imageStorage } from '@/lib/imageStorage';
 import { makeValidFileName } from '@/lib/utils';
+import { useCallback, useMemo } from 'react';
 import { Theme, useTheme } from 'theme-o-rama';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -329,8 +330,8 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         const theme = get().WorkingTheme;
         return Boolean(
           theme.colors?.cardBackdropFilter ||
-            theme.colors?.popoverBackdropFilter ||
-            theme.colors?.inputBackdropFilter,
+          theme.colors?.popoverBackdropFilter ||
+          theme.colors?.inputBackdropFilter,
         );
       },
       refreshBlobUrls: async () => {
@@ -382,21 +383,25 @@ export const useWorkingThemeState = () => {
   const store = useWorkingThemeStateStore();
   const themeContext = useTheme();
 
-  const getInitializedWorkingTheme = async (): Promise<Theme> => {
-    if (store.WorkingTheme.name === DESIGN_THEME_NAME) {
-      return await themeContext.initializeTheme(store.WorkingTheme);
-    }
+  const getInitializedWorkingTheme = useCallback(
+    async (): Promise<Theme> => {
+      if (store.WorkingTheme.name === DESIGN_THEME_NAME) {
+        return await themeContext.initializeTheme(store.WorkingTheme);
+      }
 
-    return store.WorkingTheme;
-  };
+      return store.WorkingTheme;
+    },
+    [store.WorkingTheme, themeContext],
+  );
 
-  const getBackdropFilters = async (): Promise<boolean> => {
-    const initializedTheme = await getInitializedWorkingTheme();
+  const getBackdropFilters = useCallback(
+    async (): Promise<boolean> => {
+      const initializedTheme = await getInitializedWorkingTheme();
 
-    // Check all backdrop filter properties in the theme
-    const hasBackdropFilters = Boolean(
-      // Colors backdrop filters
-      initializedTheme.colors?.cardBackdropFilter ||
+      // Check all backdrop filter properties in the theme
+      const hasBackdropFilters = Boolean(
+        // Colors backdrop filters
+        initializedTheme.colors?.cardBackdropFilter ||
         initializedTheme.colors?.popoverBackdropFilter ||
         initializedTheme.colors?.inputBackdropFilter ||
         // Sidebar backdrop filter
@@ -405,14 +410,21 @@ export const useWorkingThemeState = () => {
         initializedTheme.tables?.header?.backdropFilter ||
         initializedTheme.tables?.row?.backdropFilter ||
         initializedTheme.tables?.footer?.backdropFilter,
-    );
+      );
 
-    return hasBackdropFilters;
-  };
+      return hasBackdropFilters;
+    },
+    [getInitializedWorkingTheme],
+  );
 
-  return {
-    ...store,
-    getInitializedWorkingTheme: getInitializedWorkingTheme,
-    getBackdropFilters: getBackdropFilters,
-  };
+  // Memoize the return value to prevent creating new object references on every render
+  // This prevents unnecessary re-renders in components that depend on these values
+  return useMemo(
+    () => ({
+      ...store,
+      getInitializedWorkingTheme,
+      getBackdropFilters,
+    }),
+    [store, getInitializedWorkingTheme, getBackdropFilters],
+  );
 };

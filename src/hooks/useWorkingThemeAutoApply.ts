@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTheme } from 'theme-o-rama';
 import {
   DESIGN_THEME_NAME,
@@ -69,10 +69,18 @@ export const useWorkingThemeAutoApply = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [WorkingTheme, isLoading]); // Depend on WorkingTheme changes when not manually applying
 
-  return {
-    isWorkingThemeSelected: currentTheme?.name === DESIGN_THEME_NAME,
-    setManuallyApplying: (applying: boolean) => {
-      isManuallyApplying.current = applying;
-    },
-  };
+  const isWorkingThemeSelected = currentTheme?.name === DESIGN_THEME_NAME;
+
+  const setManuallyApplying = useCallback((applying: boolean) => {
+    isManuallyApplying.current = applying;
+  }, []);
+
+  // Memoize the return value to prevent creating new object references on every render
+  return useMemo(
+    () => ({
+      isWorkingThemeSelected,
+      setManuallyApplying,
+    }),
+    [isWorkingThemeSelected, setManuallyApplying],
+  );
 };

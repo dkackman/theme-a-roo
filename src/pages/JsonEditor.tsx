@@ -166,7 +166,6 @@ export default function JsonEditor() {
   ]);
 
   try {
-    console.log('mostLike', currentTheme?.mostLike);
     return (
       <Layout>
         <Header title='JSON Editor' />

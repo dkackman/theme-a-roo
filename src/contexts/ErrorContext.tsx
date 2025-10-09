@@ -7,7 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { createContext, ReactNode, useCallback, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 
 export interface CustomError {
   kind: 'walletconnect' | 'upload' | 'invalid' | 'dexie' | 'success';
@@ -30,8 +36,14 @@ export function ErrorProvider({ children }: { children: ReactNode }) {
     setErrors((prevErrors) => [...prevErrors, error]);
   }, []);
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({ errors, addError }),
+    [errors, addError],
+  );
+
   return (
-    <ErrorContext.Provider value={{ errors, addError }}>
+    <ErrorContext.Provider value={contextValue}>
       {children}
 
       {errors.length > 0 && (
