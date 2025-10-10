@@ -330,8 +330,8 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
         const theme = get().WorkingTheme;
         return Boolean(
           theme.colors?.cardBackdropFilter ||
-          theme.colors?.popoverBackdropFilter ||
-          theme.colors?.inputBackdropFilter,
+            theme.colors?.popoverBackdropFilter ||
+            theme.colors?.inputBackdropFilter,
         );
       },
       refreshBlobUrls: async () => {
@@ -383,25 +383,21 @@ export const useWorkingThemeState = () => {
   const store = useWorkingThemeStateStore();
   const themeContext = useTheme();
 
-  const getInitializedWorkingTheme = useCallback(
-    async (): Promise<Theme> => {
-      if (store.WorkingTheme.name === DESIGN_THEME_NAME) {
-        return await themeContext.initializeTheme(store.WorkingTheme);
-      }
+  const getInitializedWorkingTheme = useCallback(async (): Promise<Theme> => {
+    if (store.WorkingTheme.name === DESIGN_THEME_NAME) {
+      return await themeContext.initializeTheme(store.WorkingTheme);
+    }
 
-      return store.WorkingTheme;
-    },
-    [store.WorkingTheme, themeContext],
-  );
+    return store.WorkingTheme;
+  }, [store.WorkingTheme, themeContext]);
 
-  const getBackdropFilters = useCallback(
-    async (): Promise<boolean> => {
-      const initializedTheme = await getInitializedWorkingTheme();
+  const getBackdropFilters = useCallback(async (): Promise<boolean> => {
+    const initializedTheme = await getInitializedWorkingTheme();
 
-      // Check all backdrop filter properties in the theme
-      const hasBackdropFilters = Boolean(
-        // Colors backdrop filters
-        initializedTheme.colors?.cardBackdropFilter ||
+    // Check all backdrop filter properties in the theme
+    const hasBackdropFilters = Boolean(
+      // Colors backdrop filters
+      initializedTheme.colors?.cardBackdropFilter ||
         initializedTheme.colors?.popoverBackdropFilter ||
         initializedTheme.colors?.inputBackdropFilter ||
         // Sidebar backdrop filter
@@ -410,12 +406,10 @@ export const useWorkingThemeState = () => {
         initializedTheme.tables?.header?.backdropFilter ||
         initializedTheme.tables?.row?.backdropFilter ||
         initializedTheme.tables?.footer?.backdropFilter,
-      );
+    );
 
-      return hasBackdropFilters;
-    },
-    [getInitializedWorkingTheme],
-  );
+    return hasBackdropFilters;
+  }, [getInitializedWorkingTheme]);
 
   // Memoize the return value to prevent creating new object references on every render
   // This prevents unnecessary re-renders in components that depend on these values
