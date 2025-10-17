@@ -6,8 +6,8 @@ import UploadMetadata from '@/components/nft/UploadMetadata';
 import UploadToIPFS from '@/components/nft/UploadToIPFS';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useUploadedUrls } from '@/contexts/UploadedUrlsContext';
 import { useCollectionInfo } from '@/hooks/useCollectionInfo';
-import { useUploadedUrls } from '@/hooks/useUploadedUrls';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -51,6 +51,7 @@ export default function PrepareNft() {
     switch (currentStep) {
       case 1:
         return (
+          collectionInfo.collectionName.trim() !== '' &&
           collectionInfo.description.trim() !== '' &&
           collectionInfo.author.trim() !== '' &&
           collectionInfo.sponsor.trim() !== ''
@@ -59,8 +60,8 @@ export default function PrepareNft() {
         // NFT icon is required for step 2
         return hasNftIcon;
       case 3:
-        // Check if files have been uploaded
-        return uploadedUrls.length > 0;
+        // Check if files have been uploaded and at least the NFT icon is present
+        return uploadedUrls.some((url) => url.fileType === 'icon');
       case 4:
         // No validation needed for metadata step
         return true;

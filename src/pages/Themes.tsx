@@ -27,8 +27,7 @@ import { Theme, useTheme } from 'theme-o-rama';
 export default function Themes() {
   const { currentTheme, setCustomTheme, isLoading } = useTheme();
   const { getInitializedWorkingTheme, WorkingTheme } = useWorkingThemeState();
-  const { isWorkingThemeSelected, setManuallyApplying } =
-    useWorkingThemeAutoApply();
+  const { isExampleTheme, setManuallyApplying } = useWorkingThemeAutoApply();
 
   const [isActionsPanelMinimized, setIsActionsPanelMinimized] =
     useState<boolean>(false);
@@ -190,7 +189,7 @@ export default function Themes() {
                       <ThemeCard
                         theme={workingTheme}
                         currentTheme={currentTheme}
-                        isSelected={isWorkingThemeSelected}
+                        isSelected={!isExampleTheme}
                         onSelect={() => handleApplyWorkingTheme()}
                       />
                     )}

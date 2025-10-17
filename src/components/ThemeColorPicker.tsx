@@ -18,13 +18,13 @@ export function ThemeColorPicker({ className = '' }: ThemeColorPickerProps) {
     getBackgroundColor,
     WorkingTheme,
   } = useWorkingThemeState();
-  const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
+  const { isExampleTheme } = useWorkingThemeAutoApply();
   const [applyToBackground, setApplyToBackground] = useState(
     () => getBackgroundColor() === 'var(--theme-color)',
   );
 
   const color = getThemeColor();
-  const disabled = !isWorkingThemeSelected;
+  const disabled = isExampleTheme;
 
   // Make checkbox reactive to background color changes
   useEffect(() => {

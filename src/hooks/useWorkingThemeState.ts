@@ -32,8 +32,6 @@ interface WorkingThemeState {
   refreshBackgroundImageUrl: () => Promise<void>;
 }
 
-export const DESIGN_THEME_NAME = 'theme-a-roo-custom-theme';
-
 // Function to refresh blob URLs after store rehydration
 async function refreshBlobUrls(state: WorkingThemeState) {
   try {
@@ -66,7 +64,7 @@ async function refreshBlobUrls(state: WorkingThemeState) {
 }
 
 const DEFAULT_THEME = {
-  name: DESIGN_THEME_NAME,
+  name: 'my-custom-theme',
   displayName: 'Design',
   schemaVersion: 1,
   inherits: 'light' as const,
@@ -128,7 +126,6 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
       setWorkingThemeFromCurrent: (currentTheme: Theme) => {
         const workingThemeCopy = {
           ...currentTheme,
-          name: DESIGN_THEME_NAME,
           displayName: currentTheme.displayName || 'New Theme',
         };
         set({ WorkingTheme: workingThemeCopy });
@@ -138,7 +135,6 @@ const useWorkingThemeStateStore = create<WorkingThemeState>()(
           const parsedTheme = JSON.parse(json) as Theme;
           const workingThemeCopy = {
             ...parsedTheme,
-            name: DESIGN_THEME_NAME,
             displayName: parsedTheme.displayName || 'Imported Theme',
           };
           set({ WorkingTheme: workingThemeCopy });
@@ -384,11 +380,7 @@ export const useWorkingThemeState = () => {
   const themeContext = useTheme();
 
   const getInitializedWorkingTheme = useCallback(async (): Promise<Theme> => {
-    if (store.WorkingTheme.name === DESIGN_THEME_NAME) {
-      return await themeContext.initializeTheme(store.WorkingTheme);
-    }
-
-    return store.WorkingTheme;
+    return await themeContext.initializeTheme(store.WorkingTheme);
   }, [store.WorkingTheme, themeContext]);
 
   const getBackdropFilters = useCallback(async (): Promise<boolean> => {

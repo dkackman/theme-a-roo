@@ -1,5 +1,5 @@
-import { makeValidFileName } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { STORAGE_KEYS } from '@/lib/constants';
+import { useEffect, useRef, useState } from 'react';
 import { useTheme } from 'theme-o-rama';
 
 export interface CollectionInfo {
@@ -9,7 +9,7 @@ export interface CollectionInfo {
   twitterHandle: string;
   website: string;
   licenseUrl: string;
-  baseName: string;
+  collectionName: string;
 }
 
 const defaultCollectionInfo: CollectionInfo = {
@@ -19,7 +19,7 @@ const defaultCollectionInfo: CollectionInfo = {
   twitterHandle: '',
   website: '',
   licenseUrl: '',
-  baseName: '',
+  collectionName: '',
 };
 
 export function useCollectionInfo() {
@@ -27,10 +27,11 @@ export function useCollectionInfo() {
   const [collectionInfo, setCollectionInfo] = useState<CollectionInfo>(
     defaultCollectionInfo,
   );
+  const isInitialMount = useRef(true);
 
   // Load saved collection info from localStorage on mount
   useEffect(() => {
-    const savedInfo = localStorage.getItem('nft-collection-info');
+    const savedInfo = localStorage.getItem(STORAGE_KEYS.NFT_COLLECTION_INFO);
     if (savedInfo) {
       try {
         const parsed = JSON.parse(savedInfo);
@@ -41,19 +42,26 @@ export function useCollectionInfo() {
     }
   }, []);
 
-  // Update baseName when theme changes
+  // Set collectionName when theme changes (only if it's empty)
   useEffect(() => {
-    if (currentTheme) {
+    if (currentTheme && !collectionInfo.collectionName) {
       setCollectionInfo((prev) => ({
         ...prev,
-        baseName: makeValidFileName(currentTheme.displayName),
+        collectionName: currentTheme.name,
       }));
     }
-  }, [currentTheme]);
+  }, [currentTheme, collectionInfo.collectionName]);
 
-  // Save collection info to localStorage whenever it changes
+  // Save collection info to localStorage whenever it changes (skip initial mount)
   useEffect(() => {
-    localStorage.setItem('nft-collection-info', JSON.stringify(collectionInfo));
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    localStorage.setItem(
+      STORAGE_KEYS.NFT_COLLECTION_INFO,
+      JSON.stringify(collectionInfo),
+    );
   }, [collectionInfo]);
 
   const updateCollectionInfo = (updates: Partial<CollectionInfo>) => {

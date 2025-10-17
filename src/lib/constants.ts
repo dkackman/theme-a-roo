@@ -19,5 +19,7 @@ export const STORAGE_KEYS = {
   PINATA_GATEWAY: 'pinata-gateway',
   PINATA_GROUP_NAME: 'pinata-group-name',
 
+  // NFT Collection
+  NFT_COLLECTION_INFO: 'nft-collection-info',
   UPLOADED_URLS_KEY: 'uploaded-urls',
 } as const;

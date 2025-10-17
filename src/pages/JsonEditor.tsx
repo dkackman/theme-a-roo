@@ -27,7 +27,7 @@ export default function JsonEditor() {
   const { addError } = useErrors();
   const { currentTheme } = useTheme();
   const { WorkingTheme, setWorkingThemeFromJson } = useWorkingThemeState();
-  const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
+  const { isExampleTheme } = useWorkingThemeAutoApply();
 
   // JSON editor state - only loads working theme on page navigation
   const [jsonEditorValue, setJsonEditorValue] = useState('');
@@ -148,7 +148,7 @@ export default function JsonEditor() {
   useEffect(() => {
     if (!hasLoadedInitialTheme) {
       const workingThemeJson = JSON.stringify(WorkingTheme, null, 2);
-      if (isWorkingThemeSelected && workingThemeJson) {
+      if (!isExampleTheme && workingThemeJson) {
         setJsonEditorValue(workingThemeJson);
         setOriginalJsonValue(workingThemeJson);
       } else if (currentTheme) {
@@ -158,12 +158,7 @@ export default function JsonEditor() {
       }
       setHasLoadedInitialTheme(true);
     }
-  }, [
-    currentTheme,
-    hasLoadedInitialTheme,
-    isWorkingThemeSelected,
-    WorkingTheme,
-  ]);
+  }, [currentTheme, hasLoadedInitialTheme, isExampleTheme, WorkingTheme]);
 
   try {
     return (
@@ -173,12 +168,12 @@ export default function JsonEditor() {
         <div className='flex-1 overflow-auto'>
           <div className='container mx-auto p-6 space-y-6'>
             {/* Readonly Notice */}
-            {!isWorkingThemeSelected && (
+            {isExampleTheme && (
               <Alert>
                 <Info className='h-4 w-4' />
                 <AlertDescription>
-                  You are viewing an example theme. Switch to the working theme
-                  to make edits.
+                  You are viewing an example theme. Switch to your own theme to
+                  make edits.
                 </AlertDescription>
               </Alert>
             )}
@@ -188,7 +183,7 @@ export default function JsonEditor() {
               <CardHeader>
                 <CardTitle className='text-lg'>JSON Editor</CardTitle>
                 <CardDescription>
-                  {isWorkingThemeSelected
+                  {isExampleTheme
                     ? 'Edit your theme directly in JSON format. Changes are applied when you click Apply.'
                     : 'View the current theme in JSON format. Switch to the working theme to edit.'}
                 </CardDescription>
@@ -200,9 +195,7 @@ export default function JsonEditor() {
                     <Button
                       onClick={handleValidateJson}
                       variant='outline'
-                      disabled={
-                        !isWorkingThemeSelected || !jsonEditorValue?.trim()
-                      }
+                      disabled={isExampleTheme || !jsonEditorValue?.trim()}
                       className={`flex items-center gap-2 ${
                         validationState === 'valid'
                           ? 'border-green-500 text-green-600 hover:bg-green-50'
@@ -217,7 +210,7 @@ export default function JsonEditor() {
                     <Button
                       onClick={handleApplyJsonTheme}
                       disabled={
-                        !isWorkingThemeSelected ||
+                        isExampleTheme ||
                         isApplyingJson ||
                         !jsonEditorValue?.trim()
                       }
@@ -238,7 +231,7 @@ export default function JsonEditor() {
                   </div>
                 </div>
                 <div
-                  className={`w-full border border-gray-300 rounded ${!isWorkingThemeSelected ? 'opacity-75' : ''}`}
+                  className={`w-full border border-gray-300 rounded ${isExampleTheme ? 'opacity-75' : ''}`}
                 >
                   <Editor
                     theme={currentTheme?.mostLike === 'dark' ? 'vs-dark' : 'vs'}
@@ -375,12 +368,12 @@ export default function JsonEditor() {
                     defaultLanguage='json'
                     value={jsonEditorValue}
                     onChange={
-                      isWorkingThemeSelected
+                      isExampleTheme
                         ? (value) => handleJsonEditorChange(value || '')
                         : undefined
                     }
                     options={{
-                      readOnly: !isWorkingThemeSelected,
+                      readOnly: isExampleTheme,
                       minimap: { enabled: true },
                       scrollBeyondLastLine: false,
                       fontSize: 12,

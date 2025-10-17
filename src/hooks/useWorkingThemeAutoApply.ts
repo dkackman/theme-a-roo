@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTheme } from 'theme-o-rama';
-import {
-  DESIGN_THEME_NAME,
-  useWorkingThemeState,
-} from './useWorkingThemeState';
+import { useWorkingThemeState } from './useWorkingThemeState';
+
+// Built-in theme names from the themes folder
+const BUILT_IN_THEME_NAMES = [
+  'light',
+  'dark',
+  'circuit',
+  'colorful',
+  'glass-dark',
+  'glass-light',
+  'win95',
+  'xch-dark',
+  'xch-light',
+];
 
 export const useWorkingThemeAutoApply = () => {
   const { currentTheme, setCustomTheme, isLoading } = useTheme();
@@ -12,6 +22,14 @@ export const useWorkingThemeAutoApply = () => {
   const hasAppliedWorkingTheme = useRef(false);
   const lastAppliedThemeHash = useRef<string>('');
   const isManuallyApplying = useRef(false);
+
+  const isExampleTheme = useMemo(
+    () =>
+      currentTheme?.name
+        ? BUILT_IN_THEME_NAMES.includes(currentTheme.name)
+        : false,
+    [currentTheme?.name],
+  );
 
   // Apply the working theme at startup - only on first app load when no theme is selected
   useEffect(() => {
@@ -45,11 +63,7 @@ export const useWorkingThemeAutoApply = () => {
   // Auto-apply working theme changes when working theme is currently selected
   useEffect(() => {
     const applyWorkingThemeChanges = async () => {
-      if (
-        !isLoading &&
-        currentTheme?.name === DESIGN_THEME_NAME &&
-        !isManuallyApplying.current
-      ) {
+      if (!isLoading && !isExampleTheme && !isManuallyApplying.current) {
         try {
           const initializedTheme = await getInitializedWorkingTheme();
           const workingThemeJson = JSON.stringify(initializedTheme);
@@ -67,9 +81,7 @@ export const useWorkingThemeAutoApply = () => {
 
     applyWorkingThemeChanges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [WorkingTheme, isLoading]); // Depend on WorkingTheme changes when not manually applying
-
-  const isWorkingThemeSelected = currentTheme?.name === DESIGN_THEME_NAME;
+  }, [WorkingTheme, isLoading, isExampleTheme]); // Depend on WorkingTheme changes when not manually applying
 
   const setManuallyApplying = useCallback((applying: boolean) => {
     isManuallyApplying.current = applying;
@@ -78,9 +90,9 @@ export const useWorkingThemeAutoApply = () => {
   // Memoize the return value to prevent creating new object references on every render
   return useMemo(
     () => ({
-      isWorkingThemeSelected,
+      isExampleTheme,
       setManuallyApplying,
     }),
-    [isWorkingThemeSelected, setManuallyApplying],
+    [isExampleTheme, setManuallyApplying],
   );
 };

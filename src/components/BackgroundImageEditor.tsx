@@ -28,13 +28,13 @@ export function BackgroundImageEditor() {
     refreshBackgroundImageUrl,
     WorkingTheme,
   } = useWorkingThemeState();
-  const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
+  const { isExampleTheme } = useWorkingThemeAutoApply();
 
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(
     null,
   );
   const selectedColor = getThemeColor();
-  const disabled = !isWorkingThemeSelected;
+  const disabled = isExampleTheme;
   const isOpenAIReady = isOpenAIInitialized();
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageUrl, setImageUrl] = useState('');

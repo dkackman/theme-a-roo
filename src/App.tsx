@@ -9,6 +9,7 @@ import { Slide, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider, useTheme } from 'theme-o-rama';
 import { ErrorProvider } from './contexts/ErrorContext';
+import { UploadedUrlsProvider } from './contexts/UploadedUrlsContext';
 import About from './pages/About';
 import BackgroundEditor from './pages/BackgroundEditor';
 import Components from './pages/Components';
@@ -69,8 +70,10 @@ export default function App() {
       imageResolver={resolveThemeImage}
     >
       <ErrorProvider>
-        <RouterProvider router={router} />
-        <ThemeAwareToastContainer />
+        <UploadedUrlsProvider>
+          <RouterProvider router={router} />
+          <ThemeAwareToastContainer />
+        </UploadedUrlsProvider>
       </ErrorProvider>
     </ThemeProvider>
   );

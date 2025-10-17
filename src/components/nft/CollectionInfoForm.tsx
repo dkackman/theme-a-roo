@@ -9,6 +9,7 @@ export interface CollectionInfo {
   sponsor: string;
   twitterHandle: string;
   website: string;
+  collectionName: string;
 }
 
 interface CollectionInfoFormProps {
@@ -29,6 +30,17 @@ export default function CollectionInfoForm({
 
   return (
     <div className='max-w-2xl mx-auto space-y-4'>
+      {/* Collection Name */}
+      <div className='space-y-2'>
+        <Label htmlFor='collectionName'>Collection Name *</Label>
+        <Input
+          id='collectionName'
+          placeholder='Your theme collection name'
+          value={collectionInfo.collectionName}
+          onChange={(e) => handleInputChange('collectionName', e.target.value)}
+        />
+      </div>
+
       {/* Theme Description */}
       <div className='space-y-2'>
         <Label htmlFor='description'>Theme Description *</Label>

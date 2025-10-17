@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useUploadedUrls } from '@/contexts/UploadedUrlsContext';
 import { useCollectionInfo } from '@/hooks/useCollectionInfo';
-import { useUploadedUrls } from '@/hooks/useUploadedUrls';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { IMAGE_STORAGE_KEYS, STORAGE_KEYS } from '@/lib/constants';
 import { imageStorage } from '@/lib/imageStorage';
@@ -123,7 +123,7 @@ export default function UploadToIPFS() {
 
     setIsUploading(true);
     setUploadedUrls([]); // Clear previous uploads
-    const nftBaseName = collectionInfo.baseName;
+    const nftBaseName = collectionInfo.collectionName;
     try {
       toast.info('Starting upload process...');
       const filesToUpload: {

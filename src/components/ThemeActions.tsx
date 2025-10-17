@@ -62,7 +62,7 @@ export function ThemeActions() {
   const [backgroundImagePath, setBackgroundImagePath] = useState<string>('');
 
   // Check if working theme is currently selected
-  const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
+  const { isExampleTheme } = useWorkingThemeAutoApply();
 
   useEffect(() => {
     setIsTauri(isTauriEnvironment());
@@ -279,7 +279,7 @@ export function ThemeActions() {
             placeholder='Enter a name for your theme'
             value={WorkingTheme.displayName || ''}
             onChange={(e) => setThemeDisplayName(e.target.value)}
-            disabled={!isWorkingThemeSelected}
+            disabled={isExampleTheme}
             className='w-full px-3 py-2 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed'
           />
         </div>
@@ -296,7 +296,7 @@ export function ThemeActions() {
                     : (value as 'light' | 'dark' | 'color'),
                 )
               }
-              disabled={!isWorkingThemeSelected}
+              disabled={isExampleTheme}
             >
               <SelectTrigger className='w-full disabled:opacity-50 disabled:cursor-not-allowed'>
                 <SelectValue placeholder='Select inheritance' />
@@ -319,7 +319,7 @@ export function ThemeActions() {
                   value === 'none' ? undefined : (value as 'light' | 'dark'),
                 )
               }
-              disabled={!isWorkingThemeSelected}
+              disabled={isExampleTheme}
             >
               <SelectTrigger className='w-full disabled:opacity-50 disabled:cursor-not-allowed'>
                 <SelectValue placeholder='Select most like' />

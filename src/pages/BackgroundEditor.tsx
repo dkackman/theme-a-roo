@@ -15,7 +15,7 @@ import { useWorkingThemeAutoApply } from '@/hooks/useWorkingThemeAutoApply';
 import { Info } from 'lucide-react';
 
 export default function BackgroundEditor() {
-  const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
+  const { isExampleTheme } = useWorkingThemeAutoApply();
 
   try {
     return (
@@ -25,12 +25,12 @@ export default function BackgroundEditor() {
         <div className='flex-1 overflow-auto'>
           <div className='container mx-auto p-6 space-y-6'>
             {/* Readonly Notice */}
-            {!isWorkingThemeSelected && (
+            {isExampleTheme && (
               <Alert>
                 <Info className='h-4 w-4' />
                 <AlertDescription>
-                  You are viewing an example theme. Switch to the working theme
-                  to make edits.
+                  You are viewing an example theme. Switch to your own theme to
+                  make edits.
                 </AlertDescription>
               </Alert>
             )}
@@ -41,9 +41,7 @@ export default function BackgroundEditor() {
                 {/* Left Column - Color and Filters */}
                 <div className='space-y-6'>
                   {/* Color Picker */}
-                  <Card
-                    className={`${!isWorkingThemeSelected ? 'opacity-50' : ''}`}
-                  >
+                  <Card className={`${isExampleTheme ? 'opacity-50' : ''}`}>
                     <CardHeader>
                       <CardTitle className='text-lg'>Color Selection</CardTitle>
                       <CardDescription>
@@ -56,9 +54,7 @@ export default function BackgroundEditor() {
                   </Card>
 
                   {/* Backdrop Filters */}
-                  <Card
-                    className={`${!isWorkingThemeSelected ? 'opacity-50' : ''}`}
-                  >
+                  <Card className={`${isExampleTheme ? 'opacity-50' : ''}`}>
                     <CardHeader>
                       <CardTitle className='text-lg'>
                         Backdrop Filters
@@ -74,9 +70,7 @@ export default function BackgroundEditor() {
                 </div>
 
                 {/* Right Column - Background Image */}
-                <Card
-                  className={`${!isWorkingThemeSelected ? 'opacity-50' : ''}`}
-                >
+                <Card className={`${isExampleTheme ? 'opacity-50' : ''}`}>
                   <CardHeader>
                     <CardTitle className='text-lg'>Background Image</CardTitle>
                     <CardDescription>

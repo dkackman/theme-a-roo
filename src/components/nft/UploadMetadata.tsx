@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useUploadedUrls } from '@/contexts/UploadedUrlsContext';
 import { useCollectionInfo } from '@/hooks/useCollectionInfo';
-import { useUploadedUrls } from '@/hooks/useUploadedUrls';
 import { useWorkingThemeState } from '@/hooks/useWorkingThemeState';
 import { PinataSDK, type GroupResponseItem } from 'pinata';
 import { useCallback, useEffect, useState } from 'react';
@@ -36,7 +36,7 @@ export default function UploadMetadata() {
     )?.url;
 
     const finalTheme = JSON.parse(JSON.stringify(WorkingTheme));
-    finalTheme.name = collectionInfo.baseName;
+    finalTheme.name = collectionInfo.collectionName;
     if (backgroundUrl) {
       finalTheme.backgroundImage = backgroundUrl;
     }
@@ -140,7 +140,7 @@ export default function UploadMetadata() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${collectionInfo.baseName}-metadata.json`;
+    link.download = `${collectionInfo.collectionName}-metadata.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -184,7 +184,7 @@ export default function UploadMetadata() {
       const metadataBlob = new Blob([metadata], { type: 'application/json' });
       const metadataFile = new File(
         [metadataBlob],
-        `${collectionInfo.baseName}-metadata.json`,
+        `${collectionInfo.collectionName}-metadata.json`,
         {
           type: 'application/json',
         },

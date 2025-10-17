@@ -10,7 +10,7 @@ export function BackdropFilters() {
     setBackdropFilters: setBackdropFiltersHook,
     getBackgroundImage,
   } = useWorkingThemeState();
-  const { isWorkingThemeSelected } = useWorkingThemeAutoApply();
+  const { isExampleTheme } = useWorkingThemeAutoApply();
 
   const [backdropFilters, setBackdropFilters] = useState<boolean>(false);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function BackdropFilters() {
     loadData();
   }, [WorkingTheme, getBackgroundImage]);
 
-  const disabled = !isWorkingThemeSelected || !backgroundImage || isLoading;
+  const disabled = isExampleTheme || !backgroundImage || isLoading;
 
   return (
     <div className='space-y-3'>
