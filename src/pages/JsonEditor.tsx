@@ -25,9 +25,9 @@ import { useTheme } from 'theme-o-rama';
 
 export default function JsonEditor() {
   const { addError } = useErrors();
-  const { currentTheme } = useTheme();
+  const { currentTheme, setCustomTheme, initializeTheme } = useTheme();
   const { WorkingTheme, setWorkingThemeFromJson } = useWorkingThemeState();
-  const { isExampleTheme } = useWorkingThemeAutoApply();
+  const { isExampleTheme, setManuallyApplying } = useWorkingThemeAutoApply();
 
   // JSON editor state - only loads working theme on page navigation
   const [jsonEditorValue, setJsonEditorValue] = useState('');
@@ -78,7 +78,7 @@ export default function JsonEditor() {
   }, [blocker]);
 
   // Handler for applying JSON editor changes - completely replaces working theme
-  const handleApplyJsonTheme = useCallback(() => {
+  const handleApplyJsonTheme = useCallback(async () => {
     if (!jsonEditorValue || !jsonEditorValue.trim()) {
       addError({
         kind: 'invalid',
@@ -88,14 +88,33 @@ export default function JsonEditor() {
     }
 
     setIsApplyingJson(true);
+    // Signal that we're manually applying to prevent auto-apply conflicts
+    setManuallyApplying(true);
 
     try {
       // First validate the JSON
       validateThemeJson(jsonEditorValue);
 
       // Replace the working theme completely with the JSON content
-      // The useWorkingThemeAutoApply hook will automatically apply the changes
       setWorkingThemeFromJson(jsonEditorValue);
+
+      // Manually apply the theme immediately
+      try {
+        // Parse the JSON to get the theme object
+        const parsedTheme = JSON.parse(jsonEditorValue);
+        // Initialize the theme to fill in any missing properties
+        const initializedTheme = await initializeTheme(parsedTheme);
+        // Apply the initialized theme
+        const workingThemeJson = JSON.stringify(initializedTheme);
+        await setCustomTheme(workingThemeJson);
+      } catch (error) {
+        console.error('Failed to apply theme:', error);
+        addError({
+          kind: 'invalid',
+          reason: `Failed to apply theme: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+        return;
+      }
 
       // Update the original value to mark changes as saved
       setOriginalJsonValue(jsonEditorValue);
@@ -110,8 +129,9 @@ export default function JsonEditor() {
       console.error('Error applying theme:', err);
     } finally {
       setIsApplyingJson(false);
+      setManuallyApplying(false);
     }
-  }, [jsonEditorValue, setWorkingThemeFromJson, addError]);
+  }, [jsonEditorValue, setWorkingThemeFromJson, addError, setCustomTheme, initializeTheme, setManuallyApplying]);
 
   // Handler for validating JSON editor content
   const handleValidateJson = useCallback(() => {
@@ -369,8 +389,8 @@ export default function JsonEditor() {
                     value={jsonEditorValue}
                     onChange={
                       isExampleTheme
-                        ? (value) => handleJsonEditorChange(value || '')
-                        : undefined
+                        ? undefined
+                        : (value) => handleJsonEditorChange(value || '')
                     }
                     options={{
                       readOnly: isExampleTheme,
