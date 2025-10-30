@@ -72,13 +72,13 @@ export default function UploadMetadata() {
         name: `${currentTheme.displayName} Theme`,
         attributes: [
           {
-            trait_type: 'description',
+            type: 'description',
             value: collectionInfo.description,
           },
           ...(collectionInfo.twitterHandle
             ? [
                 {
-                  trait_type: 'twitter',
+                  type: 'twitter',
                   value: collectionInfo.twitterHandle,
                 },
               ]
@@ -86,7 +86,7 @@ export default function UploadMetadata() {
           ...(collectionInfo.website
             ? [
                 {
-                  trait_type: 'website',
+                  type: 'website',
                   value: collectionInfo.website,
                 },
               ]
@@ -94,7 +94,7 @@ export default function UploadMetadata() {
           ...(iconUrl
             ? [
                 {
-                  trait_type: 'icon',
+                  type: 'icon',
                   value: iconUrl,
                 },
               ]
@@ -102,7 +102,7 @@ export default function UploadMetadata() {
           ...(bannerUrl
             ? [
                 {
-                  trait_type: 'banner',
+                  type: 'banner',
                   value: bannerUrl,
                 },
               ]
