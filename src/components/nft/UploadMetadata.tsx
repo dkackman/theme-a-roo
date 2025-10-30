@@ -58,14 +58,11 @@ export default function UploadMetadata() {
           ? [
               {
                 trait_type: 'Background',
-                value: 'Image',
+                // ipfs strips file extensions, so we need to check the source url
+                value: currentTheme?.backgroundImage?.toLowerCase().endsWith('.gif') ? 'Animated GIF' : 'Image',
               },
             ]
           : []),
-        {
-          trait_type: 'Sponsor',
-          value: collectionInfo.sponsor,
-        },
       ],
       collection: {
         id: crypto.randomUUID(),
