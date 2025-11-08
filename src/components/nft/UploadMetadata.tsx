@@ -59,7 +59,11 @@ export default function UploadMetadata() {
               {
                 trait_type: 'Background',
                 // ipfs strips file extensions, so we need to check the source url
-                value: currentTheme?.backgroundImage?.toLowerCase().endsWith('.gif') ? 'Animated GIF' : 'Image',
+                value: currentTheme?.backgroundImage
+                  ?.toLowerCase()
+                  .endsWith('.gif')
+                  ? 'Animated GIF'
+                  : 'Image',
               },
             ]
           : []),
@@ -77,6 +81,14 @@ export default function UploadMetadata() {
                 {
                   type: 'twitter',
                   value: collectionInfo.twitterHandle,
+                },
+              ]
+            : []),
+          ...(collectionInfo.sponsor
+            ? [
+                {
+                  type: 'sponsor',
+                  value: collectionInfo.sponsor,
                 },
               ]
             : []),

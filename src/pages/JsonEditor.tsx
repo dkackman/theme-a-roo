@@ -131,7 +131,14 @@ export default function JsonEditor() {
       setIsApplyingJson(false);
       setManuallyApplying(false);
     }
-  }, [jsonEditorValue, setWorkingThemeFromJson, addError, setCustomTheme, initializeTheme, setManuallyApplying]);
+  }, [
+    jsonEditorValue,
+    setWorkingThemeFromJson,
+    addError,
+    setCustomTheme,
+    initializeTheme,
+    setManuallyApplying,
+  ]);
 
   // Handler for validating JSON editor content
   const handleValidateJson = useCallback(() => {
