@@ -56,13 +56,7 @@ export function ThemeSelector() {
 }
 
 export function ThemeSelectorSimple() {
-  const {
-    currentTheme,
-    setTheme,
-    availableThemes,
-    isLoading,
-    lastUsedNonCoreTheme,
-  } = useTheme();
+  const { currentTheme, setTheme, availableThemes, isLoading } = useTheme();
 
   if (isLoading || !currentTheme) {
     return (
@@ -75,30 +69,18 @@ export function ThemeSelectorSimple() {
     );
   }
 
-  // Get the core themes: light and dark
+  // Get the core themes: light, dark, and colorful
   const lightTheme = availableThemes.find(
     (theme: Theme) => theme.name === 'light',
   );
   const darkTheme = availableThemes.find(
     (theme: Theme) => theme.name === 'dark',
   );
+  const colorfulTheme = availableThemes.find(
+    (theme: Theme) => theme.name === 'colorful',
+  );
 
-  // Get the third theme: last used non-core theme or colorful as fallback
-  let thirdTheme = null;
-  if (lastUsedNonCoreTheme) {
-    thirdTheme = availableThemes.find(
-      (theme: Theme) => theme.name === lastUsedNonCoreTheme,
-    );
-  }
-
-  // If no last used non-core theme or it's not available, use colorful as fallback
-  if (!thirdTheme) {
-    thirdTheme = availableThemes.find(
-      (theme: Theme) => theme.name === 'colorful',
-    );
-  }
-
-  const coreThemes = [lightTheme, darkTheme, thirdTheme].filter(
+  const coreThemes = [lightTheme, darkTheme, colorfulTheme].filter(
     (theme): theme is NonNullable<typeof theme> => theme !== undefined,
   );
 
